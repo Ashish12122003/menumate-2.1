@@ -3,10 +3,10 @@
 import apiClient from './axios';
 import { loginVendor as baseLoginVendor } from './vendorService'; // Import the base login function
 
-// This function acts as a wrapper for admin-specific login logic
+// ---------------- Admin Auth ----------------
 export const loginAdmin = async (credentials) => {
     try {
-        const response = await baseLoginVendor(credentials); // Use the correct login function
+        const response = await baseLoginVendor(credentials);
         return response;
     } catch (error) {
         console.error("Error with admin login:", error);
@@ -14,17 +14,16 @@ export const loginAdmin = async (credentials) => {
     }
 };
 
-// Public API call for food courts
+// ---------------- Food Courts ----------------
 export const getAllFoodCourts = async () => {
     try {
-        const response = await apiClient.get('/admin/foodcourts'); // The fix: Use the admin route
+        const response = await apiClient.get('/admin/foodcourts');
         return response.data;
     } catch (error) {
         throw error;
     }
 };
 
-// Admin-specific API calls (requires Admin JWT)
 export const createFoodCourt = async (foodCourtData) => {
     try {
         const response = await apiClient.post('/admin/foodcourts', foodCourtData);
@@ -34,6 +33,7 @@ export const createFoodCourt = async (foodCourtData) => {
     }
 };
 
+// ---------------- Shops ----------------
 export const getPendingShops = async () => {
     try {
         const response = await apiClient.get('/manager/pending-shops');
@@ -62,6 +62,9 @@ export const getAdminProfile = async () => {
     }
 };
 
+// ---------------- Tables ----------------
+
+// Create one or multiple tables for a shop
 export const createTablesForShop = async (shopId, tablesData) => {
     try {
         const response = await apiClient.post(`/shops/${shopId}/tables`, tablesData);
@@ -72,11 +75,33 @@ export const createTablesForShop = async (shopId, tablesData) => {
     }
 };
 
+// **NEW**: Fetch all tables for a shop
+export const getTablesForShop = async (shopId) => {
+    try {
+        const response = await apiClient.get(`/shops/${shopId}/tables`);
+        // Backend should return { tables: [...] }
+        return response.data.data|| [];
+    } catch (error) {
+        console.error("Error fetching tables for shop:", error);
+        throw error;
+    }
+};
+
+export const deleteTable = async (shopId, qrIdentifier) => {
+  try {
+    const response = await apiClient.delete(`/shops/${shopId}/tables/${qrIdentifier}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting table:", error);
+    throw error;
+  }
+};
+
+// ---------------- Analytics ----------------
 export const getShopAnalytics = async (shopId, duration) => {
     try {
-        // Duration can be 'day', 'week', 'month', '3month', etc.
         const response = await apiClient.get(`/shops/${shopId}/analytics?duration=${duration}`);
-        return response.data; // Expecting { success: true, data: { earnings, orders, etc. } }
+        return response.data;
     } catch (error) {
         throw error;
     }

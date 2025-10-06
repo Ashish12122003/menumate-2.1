@@ -26,6 +26,8 @@ import ProtectedRoute from './ProtectedRoute';
 import VendorProtectedRoute from './VendorProtectedRoute';
 import AdminProtectedRoute from './AdminProtectedRoute';
 import ReviewsPage from '../pages/ReviewsPage';
+import KOTDisplayPage from '../pages/vendor/KOTDisplayPage'; // New Import
+
 
 
 const AppRoutes = () => {
@@ -99,9 +101,23 @@ const AppRoutes = () => {
                 }
             />
 
+            
+
             {/* Fallback */}
             <Route path="*" element={<h1>404: Not Found</h1>} />
+
+            <Route 
+                path="/vendor/kot-display" 
+                element={
+                    <VendorProtectedRoute>
+                        <KOTDisplayPage />
+                    </VendorProtectedRoute>
+                } 
+            />
+
+            {/* ... (Fallback) ... */}
         </Routes>
+        
     );
 };
 

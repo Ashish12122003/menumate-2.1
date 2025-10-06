@@ -2,7 +2,6 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { placeNewOrder, fetchOrderById as fetchOrderApi, fetchUserOrders as getUserOrders } from '../../api/orderService';
 
 // --- Async Thunks ---
-
 // 1. Place a new order
 export const placeOrder = createAsyncThunk(
   'order/placeOrder',
@@ -61,69 +60,55 @@ const orderSlice = createSlice({
       state.currentOrder = action.payload;
       state.loading = false;
     },
-    setReviewableOrders: (state) => {
-      // Assumes order has 'orderStatus' and optionally a 'review' property
-      state.reviewableOrders = state.userOrders.filter(
-        (order) => 
-          order.orderStatus === 'Completed' && !order.review
-      );
-    },
-    updateOrderStatus: (state, action) => {
-      const { orderId, newStatus } = action.payload;
 
-      if (state.currentOrder?._id === orderId) {
-        state.currentOrder.orderStatus = newStatus;
+    setReviewableOrders: (state) => {
+      state.reviewableOrders = state.userOrders.filter(
+        order => order.orderStatus === 'Completed' && !order.review
+      );
+    },
+
+    // ✅ Update order status from API or WebSocket
+    updateOrderStatus: (state, action) => {
+      const { _id, orderStatus } = action.payload; // payload must be full order or { _id, orderStatus }
+
+      if (state.currentOrder?._id === _id) {
+        state.currentOrder.orderStatus = orderStatus;
       }
 
-      const index = state.userOrders.findIndex(order => order._id === orderId);
-      if (index !== -1) state.userOrders[index].orderStatus = newStatus;
+      const index = state.userOrders.findIndex(order => order._id === _id);
+      if (index !== -1) {
+        state.userOrders[index].orderStatus = orderStatus;
+      } else {
+        // Optional: add order if not present (useful if WebSocket sends a new order)
+        state.userOrders.unshift(action.payload);
+      }
+
+      // Update reviewableOrders
+      orderSlice.caseReducers.setReviewableOrders(state);
     },
+
     clearOrder: (state) => {
       state.currentOrder = null;
       state.userOrders = [];
       state.loading = false;
       state.error = null;
+      state.reviewableOrders = [];
     },
   },
   extraReducers: (builder) => {
     builder
       // --- placeOrder ---
-      .addCase(placeOrder.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(placeOrder.fulfilled, (state, action) => {
-        state.loading = false;
-        state.currentOrder = action.payload;
-        state.error = null;
-      })
-      .addCase(placeOrder.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-        state.currentOrder = null;
-      })
+      .addCase(placeOrder.pending, (state) => { state.loading = true; state.error = null; })
+      .addCase(placeOrder.fulfilled, (state, action) => { state.loading = false; state.currentOrder = action.payload; state.error = null; })
+      .addCase(placeOrder.rejected, (state, action) => { state.loading = false; state.error = action.payload; state.currentOrder = null; })
 
       // --- fetchOrderById ---
-      .addCase(fetchOrderById.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(fetchOrderById.fulfilled, (state, action) => {
-        state.loading = false;
-        state.currentOrder = action.payload;
-        state.error = null;
-      })
-      .addCase(fetchOrderById.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-        state.currentOrder = null;
-      })
+      .addCase(fetchOrderById.pending, (state) => { state.loading = true; state.error = null; })
+      .addCase(fetchOrderById.fulfilled, (state, action) => { state.loading = false; state.currentOrder = action.payload; state.error = null; })
+      .addCase(fetchOrderById.rejected, (state, action) => { state.loading = false; state.error = action.payload; state.currentOrder = null; })
 
       // --- fetchUserOrders ---
-      .addCase(fetchUserOrders.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
+      .addCase(fetchUserOrders.pending, (state) => { state.loading = true; state.error = null; })
       .addCase(fetchUserOrders.fulfilled, (state, action) => {
         state.loading = false;
         state.userOrders = action.payload || [];
@@ -140,4 +125,3 @@ const orderSlice = createSlice({
 
 export const { orderPlaced, updateOrderStatus, clearOrder } = orderSlice.actions;
 export default orderSlice.reducer;
-

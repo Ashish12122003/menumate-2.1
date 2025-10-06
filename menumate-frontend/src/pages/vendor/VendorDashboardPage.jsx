@@ -67,6 +67,14 @@ const VendorDashboardPage = () => {
             >
               Manage Shops
             </Link>
+
+            <Link
+              to="/vendor/kot-display"
+              className="px-5 py-2 rounded-lg text-sm font-medium bg-green-900 text-white hover:bg-green-800 transition"
+            >
+              KOT Display
+            </Link>
+
             <button
               onClick={handleLogout}
               className="px-5 py-2 rounded-lg text-sm font-medium bg-orange-400 text-white hover:bg-red-600 transition"
