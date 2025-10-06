@@ -1,3 +1,4 @@
+// src/components/organisms/POSDashboard.jsx
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchShopAnalytics } from "../../features/vendor/shopSlice";
@@ -12,19 +13,21 @@ import {
   FaChevronUp,
 } from "react-icons/fa";
 
+import CustomChart from "../molecules/CustomChart";
+
 const durationOptions = [
   { label: "Today", value: "day" },
   { label: "Week", value: "week" },
   { label: "1 Month", value: "month" },
   { label: "3 Months", value: "3month" },
   { label: "6 Months", value: "6month" },
-  { label: "All Time", value: "all" },
+  { label: "Custom", value: "custom" },
 ];
 
+const colors = ["#4ade80", "#60a5fa", "#facc15", "#f472b6", "#a78bfa"];
+
 const StatCard = ({ title, value, icon: Icon, color }) => (
-  <div
-    className={`p-4 rounded-xl shadow-lg ${color} text-white flex flex-col justify-between`}
-  >
+  <div className={`p-4 rounded-xl shadow-lg ${color} text-white flex flex-col justify-between`}>
     <div className="flex justify-between items-center">
       <h3 className="text-sm font-medium">{title}</h3>
       <Icon size={20} />
@@ -48,22 +51,26 @@ const POSDashboard = ({ shopId }) => {
     }
   }, [dispatch, shopId, duration]);
 
-  if (isLoading)
-    return <p className="text-center p-8">Loading analytics data...</p>;
-  if (analytics.error)
-    return (
-      <p className="text-center p-8 text-red-500">
-        Error: {analytics.error}
-      </p>
-    );
+  if (isLoading) return <p className="text-center p-8">Loading analytics data...</p>;
+  if (analytics.error) return <p className="text-center p-8 text-red-500">Error: {analytics.error}</p>;
+
+  // Prepare pie chart data for top items
+  const itemsPie = [
+    data.mostFavItem ? { name: data.mostFavItem.name, value: data.mostFavItem.count } : null,
+    data.leastFavItem ? { name: data.leastFavItem.name, value: data.leastFavItem.count } : null,
+  ].filter(Boolean);
+
+  // Prepare pie chart data for top tables
+  const tablesPie = (data.topTables || []).map((t) => ({
+    name: `Table ${t.tableNumber}`,
+    value: t.orderCount,
+  }));
 
   return (
     <div className="space-y-8">
+      {/* Header */}
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-secondary">
-          POS & Analytics Dashboard
-        </h2>
-
+        <h2 className="text-2xl font-bold text-secondary">POS & Analytics Dashboard</h2>
         <select
           value={duration}
           onChange={(e) => setDuration(e.target.value)}
@@ -77,7 +84,7 @@ const POSDashboard = ({ shopId }) => {
         </select>
       </div>
 
-      {/* Summary Cards */}
+      {/* Summary Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
         <StatCard
           title="Total Revenue"
@@ -105,58 +112,41 @@ const POSDashboard = ({ shopId }) => {
         />
       </div>
 
-      {/* Performance Metrics */}
+      {/* Item Performance Pie Chart */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Item Performance */}
         <div className="bg-white p-6 rounded-xl shadow-lg border">
           <h3 className="text-xl font-bold mb-4 flex items-center space-x-2">
             <FaChartLine />
             <span>Item Performance</span>
           </h3>
-          <div className="space-y-4">
-            <div className="border-b pb-2">
-              <p className="font-semibold text-gray-700">🏆 Most Popular Item:</p>
-              <p className="text-lg font-mono text-green-700">
-                {data.mostFavItem?.name || "N/A"}
-              </p>
-              <span className="text-sm text-gray-500">
-                ({data.mostFavItem?.count || 0} orders)
-              </span>
-            </div>
-            <div className="pt-2">
-              <p className="font-semibold text-gray-700">📉 Least Popular Item:</p>
-              <p className="text-lg font-mono text-red-700">
-                {data.leastFavItem?.name || "N/A"}
-              </p>
-              <span className="text-sm text-gray-500">
-                ({data.leastFavItem?.count || 0} orders)
-              </span>
-            </div>
-          </div>
+          {itemsPie.length > 0 ? (
+            <CustomChart type="pie" data={itemsPie} dataKey="value" nameKey="name" colors={colors} height={250} />
+          ) : (
+            <p className="text-center text-gray-500">No item data available</p>
+          )}
         </div>
 
-        {/* Top Tables */}
+        {/* Top Tables Pie Chart */}
         <div className="bg-white p-6 rounded-xl shadow-lg border">
           <h3 className="text-xl font-bold mb-4 flex items-center space-x-2">
             <FaTable />
-            <span>Top Tables by Order Count</span>
+            <span>Top Tables</span>
           </h3>
-          {data.topTables && data.topTables.length > 0 ? (
-            <ul className="space-y-2">
-              {data.topTables.map((table, index) => (
-                <li key={index} className="flex justify-between text-gray-700">
-                  <span className="font-medium">Table {table.tableNumber}</span>
-                  <span className="text-primary font-bold">
-                    {table.orderCount} orders
-                  </span>
-                </li>
-              ))}
-            </ul>
+          {tablesPie.length > 0 ? (
+            <CustomChart type="pie" data={tablesPie} dataKey="value" nameKey="name" colors={colors} height={250} />
           ) : (
-            <p className="text-gray-500 italic text-sm">
-              No table orders found for this period.
-            </p>
+            <p className="text-center text-gray-500">No table data available</p>
           )}
+
+          {/* Top tables list */}
+          <ul className="mt-4 space-y-2">
+            {(data.topTables || []).map((table, idx) => (
+              <li key={idx} className="flex justify-between text-gray-700">
+                <span className="font-medium">Table {table.tableNumber}</span>
+                <span className="text-primary font-bold">{table.orderCount} orders</span>
+              </li>
+            ))}
+          </ul>
         </div>
 
         {/* Customer Base */}
@@ -165,35 +155,23 @@ const POSDashboard = ({ shopId }) => {
             <FaUsers />
             <span>Customer Base</span>
           </h3>
-          <div className="space-y-2">
-            <p className="flex justify-between">
-              <span className="font-medium text-gray-700">Total Customers:</span>
-              <span className="font-bold text-blue-700">
-                {data.totalCustomers || 0}
-              </span>
-            </p>
-            <p className="flex justify-between">
-              <span className="font-medium text-gray-700">Repeat Customers:</span>
-              <span className="font-bold text-yellow-700">
-                {data.repeatCustomersCount || 0}
-              </span>
-            </p>
-          </div>
+          <p className="flex justify-between">
+            <span className="font-medium text-gray-700">Total Customers:</span>
+            <span className="font-bold text-blue-700">{data.totalCustomers || 0}</span>
+          </p>
+          <p className="flex justify-between">
+            <span className="font-medium text-gray-700">Repeat Customers:</span>
+            <span className="font-bold text-yellow-700">{data.repeatCustomersCount || 0}</span>
+          </p>
         </div>
       </div>
 
-      {/* Repeat Customers */}
+      {/* Repeat Customers Table */}
       <div className="bg-white rounded-xl shadow-lg border p-6">
-        <div
-          className="flex justify-between items-center cursor-pointer"
-          onClick={() => setShowRepeat(!showRepeat)}
-        >
-          <h3 className="text-xl font-bold text-gray-800">
-            🔁 Repeat Customers List
-          </h3>
+        <div className="flex justify-between items-center cursor-pointer" onClick={() => setShowRepeat(!showRepeat)}>
+          <h3 className="text-xl font-bold text-gray-800">🔁 Repeat Customers List</h3>
           {showRepeat ? <FaChevronUp /> : <FaChevronDown />}
         </div>
-
         {showRepeat && (
           <div className="mt-4 overflow-x-auto">
             <table className="min-w-full text-sm text-gray-700 border">
@@ -206,21 +184,17 @@ const POSDashboard = ({ shopId }) => {
                 </tr>
               </thead>
               <tbody>
-                {(data.repeatCustomers || []).map((cust, index) => (
-                  <tr key={index} className="border-t">
+                {(data.repeatCustomers || []).map((cust, idx) => (
+                  <tr key={idx} className="border-t">
                     <td className="p-2">{cust.name}</td>
                     <td className="p-2">{cust.email}</td>
                     <td className="p-2">{cust.phone}</td>
-                    <td className="p-2 text-right font-semibold">
-                      {cust.orderCount}
-                    </td>
+                    <td className="p-2 text-right font-semibold">{cust.orderCount}</td>
                   </tr>
                 ))}
                 {(!data.repeatCustomers || data.repeatCustomers.length === 0) && (
                   <tr>
-                    <td colSpan="4" className="text-center p-4 text-gray-500">
-                      No repeat customers found.
-                    </td>
+                    <td colSpan="4" className="text-center p-4 text-gray-500">No repeat customers found.</td>
                   </tr>
                 )}
               </tbody>
@@ -229,18 +203,12 @@ const POSDashboard = ({ shopId }) => {
         )}
       </div>
 
-      {/* All Customers */}
+      {/* All Customers Table */}
       <div className="bg-white rounded-xl shadow-lg border p-6">
-        <div
-          className="flex justify-between items-center cursor-pointer"
-          onClick={() => setShowAllCustomers(!showAllCustomers)}
-        >
-          <h3 className="text-xl font-bold text-gray-800">
-            👥 All Customers List
-          </h3>
+        <div className="flex justify-between items-center cursor-pointer" onClick={() => setShowAllCustomers(!showAllCustomers)}>
+          <h3 className="text-xl font-bold text-gray-800">👥 All Customers List</h3>
           {showAllCustomers ? <FaChevronUp /> : <FaChevronDown />}
         </div>
-
         {showAllCustomers && (
           <div className="mt-4 overflow-x-auto">
             <table className="min-w-full text-sm text-gray-700 border">
@@ -253,21 +221,17 @@ const POSDashboard = ({ shopId }) => {
                 </tr>
               </thead>
               <tbody>
-                {(data.allCustomers || []).map((cust, index) => (
-                  <tr key={index} className="border-t">
+                {(data.allCustomers || []).map((cust, idx) => (
+                  <tr key={idx} className="border-t">
                     <td className="p-2">{cust.name}</td>
                     <td className="p-2">{cust.email}</td>
                     <td className="p-2">{cust.phone}</td>
-                    <td className="p-2 text-right">
-                      {new Date(cust.createdAt).toLocaleDateString()}
-                    </td>
+                    <td className="p-2 text-right">{new Date(cust.createdAt).toLocaleDateString()}</td>
                   </tr>
                 ))}
                 {(!data.allCustomers || data.allCustomers.length === 0) && (
                   <tr>
-                    <td colSpan="4" className="text-center p-4 text-gray-500">
-                      No customers found.
-                    </td>
+                    <td colSpan="4" className="text-center p-4 text-gray-500">No customers found.</td>
                   </tr>
                 )}
               </tbody>
