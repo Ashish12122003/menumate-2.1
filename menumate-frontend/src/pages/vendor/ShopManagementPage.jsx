@@ -10,27 +10,37 @@ import {
 import OrderDashboard from "../../components/organisms/OrderDashboard";
 import MenuManagement from "../../components/organisms/MenuManagement";
 import CreateShopForm from "../../components/molecules/CreateShopForm";
+import POSDashboard from "../../components/organisms/POSDashboard"; // NEW IMPORT
 
 const ShopManagementPage = () => {
   const dispatch = useDispatch();
   const { shops, selectedShop, loading, error } = useSelector(
     (state) => state.shops
   );
-  const [activeTab, setActiveTab] = useState("orders");
+  // Initialize activeTab to 'orders' or 'analytics' as the default view
+  const [activeTab, setActiveTab] = useState("orders"); 
 
   useEffect(() => {
     dispatch(fetchMyShops());
   }, [dispatch]);
 
   useEffect(() => {
+    // FIX: Automatically set the first shop as selected if shops are loaded and none is selected
+    if (!selectedShop && shops.length > 0) {
+      dispatch(setSelectedShop(shops[0]));
+    }
+    
+    // Fetch detailed shop data (menu/categories) only when a shop is truly selected
     if (selectedShop) {
       dispatch(fetchShopData(selectedShop._id));
     }
-  }, [dispatch, selectedShop]);
+  }, [dispatch, shops, selectedShop]);
 
   const handleShopChange = (e) => {
     const shop = (shops || []).find((s) => s._id === e.target.value);
     dispatch(setSelectedShop(shop));
+    // Optional: Reset active tab to Orders/Analytics when shop changes
+    // setActiveTab('orders'); 
   };
 
   if (loading) {
@@ -76,6 +86,7 @@ const ShopManagementPage = () => {
           value={selectedShop?._id || ""}
           className="px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm focus:outline-none focus:ring-1 focus:ring-green-900 focus:border-green-900"
         >
+          {/* Ensure a null/empty option is not shown if selectedShop is null */}
           {(shops || []).map((shop) => (
             <option key={shop._id} value={shop._id}>
               {shop.name}
@@ -88,19 +99,42 @@ const ShopManagementPage = () => {
         <div>
           {/* Tabs */}
           <div className="flex border-b border-gray-200 mb-6">
-            {["orders", "menu"].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`px-5 py-2 text-sm font-medium transition-colors ${
-                  activeTab === tab
-                    ? "border-b-2 border-green-900 text-green-900"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
-              >
-                {tab === "orders" ? "Orders" : "Menu Management"}
-              </button>
-            ))}
+            
+            {/* Orders Tab */}
+            <button
+              onClick={() => setActiveTab("orders")}
+              className={`px-5 py-2 text-sm font-medium transition-colors ${
+                activeTab === "orders"
+                  ? "border-b-2 border-green-900 text-green-900"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              Orders
+            </button>
+            
+            {/* Menu Management Tab */}
+            <button
+              onClick={() => setActiveTab("menu")}
+              className={`px-5 py-2 text-sm font-medium transition-colors ${
+                activeTab === "menu"
+                  ? "border-b-2 border-green-900 text-green-900"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              Menu Management
+            </button>
+
+            {/* NEW: Analytics Tab */}
+            <button
+              onClick={() => setActiveTab("analytics")}
+              className={`px-5 py-2 text-sm font-medium transition-colors ${
+                activeTab === "analytics"
+                  ? "border-b-2 border-green-900 text-green-900"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              Analytics
+            </button>
           </div>
 
           {/* Tab Content */}
@@ -110,6 +144,10 @@ const ShopManagementPage = () => {
             )}
             {activeTab === "menu" && (
               <MenuManagement shopId={selectedShop._id} />
+            )}
+            {/* NEW: POS/Analytics Dashboard Content */}
+            {activeTab === "analytics" && (
+              <POSDashboard shopId={selectedShop._id} />
             )}
           </div>
         </div>

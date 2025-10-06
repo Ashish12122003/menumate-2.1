@@ -71,3 +71,13 @@ export const createTablesForShop = async (shopId, tablesData) => {
         throw error;
     }
 };
+
+export const getShopAnalytics = async (shopId, duration) => {
+    try {
+        // Duration can be 'day', 'week', 'month', '3month', etc.
+        const response = await apiClient.get(`/shops/${shopId}/analytics?duration=${duration}`);
+        return response.data; // Expecting { success: true, data: { earnings, orders, etc. } }
+    } catch (error) {
+        throw error;
+    }
+};

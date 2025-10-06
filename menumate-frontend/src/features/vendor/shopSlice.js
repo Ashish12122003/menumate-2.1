@@ -6,6 +6,7 @@ import {
   getShopCategories,
   getShopMenuItems,
 } from '../../api/vendorService';
+import { getShopAnalytics } from '../../api/adminService';
 
 export const fetchMyShops = createAsyncThunk(
   'shop/fetchMyShops',
@@ -35,6 +36,18 @@ export const fetchShopData = createAsyncThunk(
   }
 );
 
+export const fetchShopAnalytics = createAsyncThunk(
+    'shop/fetchShopAnalytics',
+    async ({ shopId, duration }, { rejectWithValue }) => {
+        try {
+            const response = await getShopAnalytics(shopId, duration);
+            return response.data; // The analytics object
+        } catch (error) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to fetch analytics.');
+        }
+    }
+);
+
 const initialState = {
   shops: [],
   selectedShop: null,
@@ -42,6 +55,11 @@ const initialState = {
   menuItems: [],
   loading: false,
   error: null,
+  analytics: {
+        data: null,
+        loading: false,
+        error: null,
+    },
 };
 
 const shopSlice = createSlice({
@@ -116,6 +134,20 @@ const shopSlice = createSlice({
         state.error = action.payload;
         state.categories = [];
         state.menuItems = [];
+      })
+      // NEW: Analytics Reducers
+      .addCase(fetchShopAnalytics.pending, (state) => {
+          state.analytics.loading = true;
+          state.analytics.error = null;
+      })
+      .addCase(fetchShopAnalytics.fulfilled, (state, action) => {
+          state.analytics.loading = false;
+          state.analytics.data = action.payload;
+      })
+      .addCase(fetchShopAnalytics.rejected, (state, action) => {
+          state.analytics.loading = false;
+          state.analytics.error = action.payload;
+          state.analytics.data = null;
       });
   },
 });
