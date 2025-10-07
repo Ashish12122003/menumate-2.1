@@ -22,10 +22,13 @@ const NavItem = ({ to, icon: Icon, label, isActive }) => {
 // Bottom navigation bar
 const BottomNavBar = () => {
   const location = useLocation();
-  const { qrIdentifier } = useSelector((state) => state.menu);
+  const { qrIdentifier , shop , shops } = useSelector((state) => state.menu);
 
+  // Determine shopId for reviews
+  const shopId = shop?._id || (shops?.[0]?._id) || null;
   // Dynamic menu URL
   const menuUrl = qrIdentifier ? `/menu/${qrIdentifier}` : '/';
+  const reviewsUrl = shopId ? `/reviews/${shopId}` : '/reviews';
 
   return (
     <footer className="fixed bottom-0 left-0 w-full bg-white shadow-2xl border-t border-gray-100 z-50">
@@ -58,10 +61,10 @@ const BottomNavBar = () => {
 
         {/* 4. Reviews Page */}
         <NavItem
-          to="/reviews"
+          to={reviewsUrl}
           icon={FaStar}
           label="Reviews"
-          isActive={location.pathname.startsWith('/reviews')}
+          isActive={location.pathname.startsWith('/reviews/')}
         />
       </div>
     </footer>

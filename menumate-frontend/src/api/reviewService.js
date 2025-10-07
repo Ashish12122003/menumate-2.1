@@ -4,7 +4,8 @@ import apiClient from './axios';
 export const getShopReviews = async (shopId) => {
   try {
     const response = await apiClient.get(`/shops/${shopId}/reviews`);
-    return response.data; // { success, count, averageRating, data: reviews }
+    return response.data;
+     // { success, count, averageRating, data: reviews }
   } catch (error) {
     console.error('Error fetching shop reviews:', error);
     throw error;

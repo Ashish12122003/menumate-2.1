@@ -57,10 +57,10 @@ const AppRoutes = () => {
             />
 
             <Route
-                path="/reviews"
+                path="/reviews/:shopId"
                 element={
                     <ProtectedRoute>
-                        <ReviewsPage />
+                    <ReviewsPage />
                     </ProtectedRoute>
                 }
             />
@@ -68,6 +68,8 @@ const AppRoutes = () => {
             {/* ------------------- 📌 VENDOR ROUTES ------------------- */}
             <Route path="/vendor/login" element={<VendorLoginPage />} />
             <Route path="/vendor/register" element={<VendorRegistrationPage />} />
+            {/* <Route path="/reviews/:shopId" element={<ReviewsPage />} /> */}
+
             
             {/* PROTECTED VENDOR ROUTES */}
             <Route
