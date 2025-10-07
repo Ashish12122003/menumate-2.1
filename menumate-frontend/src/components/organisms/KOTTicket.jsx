@@ -1,68 +1,39 @@
-// src/pages/vendor/KOTDisplayPage.jsx
-import React, { useEffect, useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import KOTTicket from '../../components/organisms/KOTTicket';
-import useVendorWebSocket from '../../hooks/useVendorWebSocket';
-import { fetchOrdersForShop, updateOrderStatus } from '../../features/vendor/orderSlice';
+import React from 'react';
 
-const KOTDisplayPage = () => {
-    const dispatch = useDispatch();
-    const { vendor } = useSelector(state => state.vendorAuth);
-    const { orders } = useSelector(state => state.vendorOrder);
-    const [activeTickets, setActiveTickets] = useState([]);
+const KOTTicket = ({ order, nextActionLabel, onNextStage }) => {
+  return (
+    <div className="bg-white rounded-lg shadow-md p-4 flex flex-col justify-between">
+      <div>
+        <h2 className="font-bold text-lg mb-2">{order.shortOrderId}</h2>
+        <p className="text-gray-500 mb-1">Table: {order.table?.tableNumber}</p>
+        <p className="text-gray-700 mb-2">Status: {order.orderStatus}</p>
 
-    const shopId = vendor?.shopId;
-    
-    // Listen for WebSocket events
-    useVendorWebSocket(shopId);
-
-    // Fetch initial orders
-    useEffect(() => {
-        if (shopId) dispatch(fetchOrdersForShop(shopId));
-    }, [dispatch, shopId]);
-
-    // Update active tickets when orders change
-    useEffect(() => {
-        const filtered = orders.filter(order =>
-            ['Accepted', 'Preparing', 'Ready'].includes(order.orderStatus)
-        );
-        setActiveTickets(filtered);
-    }, [orders]);
-
-    // Mark ticket as ready (KOT staff action)
-    const markAsReady = async (orderId) => {
-        try {
-            await dispatch(updateOrderStatus({ orderId, status: 'Ready' })).unwrap();
-        } catch (err) {
-            console.error('Failed to mark order ready:', err);
-        }
-    };
-
-    if (!vendor) return <div className="p-8 text-center text-gray-600">Please log in to view KOT.</div>;
-
-    return (
-        <div className="min-h-screen bg-gray-100 p-4">
-            <h1 className="text-4xl font-bold text-secondary mb-6">Kitchen Order Display</h1>
-            <p className="text-lg text-gray-600 mb-6">Shop: {vendor.name} - Table: {shopId}</p>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {activeTickets.length === 0 ? (
-                    <div className="col-span-full p-10 bg-white rounded-lg text-center text-gray-500">
-                        <p className="text-2xl">🟢 No Active Orders! 🟢</p>
-                        <p className="mt-2">Waiting for new requests...</p>
-                    </div>
-                ) : (
-                    activeTickets.map(ticket => (
-                        <KOTTicket
-                            key={ticket._id}
-                            order={ticket}
-                            onReady={markAsReady}
-                        />
-                    ))
-                )}
+        <div className="border-t border-dashed pt-2">
+          <h3 className="font-semibold mb-2">Items:</h3>
+          {order.items?.map((item, idx) => (
+            <div key={idx} className="flex justify-between py-1">
+              <span>{item.name} x {item.quantity}</span>
+              <span>₹{item.price * item.quantity}</span>
             </div>
+          ))}
         </div>
-    );
+
+        <div className="flex justify-between font-bold mt-2">
+          <span>Total:</span>
+          <span>₹{order.totalAmount}</span>
+        </div>
+      </div>
+
+      {nextActionLabel && (
+        <button
+          onClick={onNextStage}
+          className="mt-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
+        >
+          {nextActionLabel}
+        </button>
+      )}
+    </div>
+  );
 };
 
-export default KOTDisplayPage;
+export default KOTTicket;
