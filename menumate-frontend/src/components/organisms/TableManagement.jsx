@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { v4 as uuidv4 } from "uuid";
 import QRCode from "react-qr-code";
+import html2canvas from "html2canvas";
 import { createTablesForShop, getTablesForShop, deleteTable } from "../../api/adminService";
 import { fetchShopData } from "../../features/vendor/shopSlice";
 
@@ -113,83 +114,121 @@ const TableManagement = ({ shopId }) => {
     }
   };
 
-  // Download QR code
-  const handleDownload = (qrIdentifier, tableNumber) => {
-    const svg = document.getElementById(`qr-${qrIdentifier}`);
-    if (!svg) return;
-    const serializer = new XMLSerializer();
-    const svgStr = serializer.serializeToString(svg);
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-    const img = new Image();
-    const blob = new Blob([svgStr], { type: "image/svg+xml;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    img.onload = () => {
-      canvas.width = img.width;
-      canvas.height = img.height;
-      ctx.drawImage(img, 0, 0);
-      URL.revokeObjectURL(url);
-      const pngUrl = canvas.toDataURL("image/png");
-      const link = document.createElement("a");
-      link.href = pngUrl;
-      link.download = `Table-${tableNumber}.png`;
-      link.click();
-    };
-    img.src = url;
+  // Download branded QR template
+  const handleDownloadTemplate = async (table) => {
+    const element = document.getElementById(`qr-template-${table.qrIdentifier}`);
+    if (!element) return;
+
+    const canvas = await html2canvas(element, { backgroundColor: "#ffffff", scale: 2 });
+    const pngUrl = canvas.toDataURL("image/png");
+
+    const link = document.createElement("a");
+    link.href = pngUrl;
+    link.download = `Table-${table.tableNumber}.png`;
+    link.click();
   };
 
-  // Print QR code
-  const handlePrint = (qrIdentifier) => {
+  // Print branded QR template
+  const handlePrintTemplate = async (table) => {
+    const element = document.getElementById(`qr-template-${table.qrIdentifier}`);
+    if (!element) return;
+
+    const canvas = await html2canvas(element, { backgroundColor: "#ffffff", scale: 2 });
+    const dataUrl = canvas.toDataURL("image/png");
+
     const printWindow = window.open("", "_blank");
-    const svg = document.getElementById(`qr-${qrIdentifier}`);
-    if (!svg) return;
-    printWindow.document.write(`<html><head><title>Print QR Code</title></head><body>${svg.outerHTML}<p>Table: ${qrIdentifier}</p></body></html>`);
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Print QR</title>
+          <style>
+            body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }
+            img { width: 300px; height: auto; }
+          </style>
+        </head>
+        <body>
+          <img src="${dataUrl}" />
+        </body>
+      </html>
+    `);
     printWindow.document.close();
     printWindow.focus();
     printWindow.print();
-    printWindow.close();
   };
 
   return (
     <div className="bg-white space-y-12">
-      <h2 className="text-3xl font-bold text-olive-700 border-b border-olive-300 pb-2">Table & QR Management</h2>
+      <h2 className="text-3xl font-bold" style={{ color: "#556b2f", borderBottom: "2px solid #ccc", paddingBottom: "8px" }}>Table & QR Management</h2>
       {error && <p className="text-red-600 font-medium text-center">{error}</p>}
-      {successMessage && <p className="text-olive-700 font-medium text-center">{successMessage}</p>}
+      {successMessage && <p className="text-green-700 font-medium text-center">{successMessage}</p>}
 
       {/* Manual QR */}
-      <div className="bg-white rounded-2xl shadow-lg p-6 border-orange-300">
-        <h3 className="text-xl font-semibold text-olive-800 mb-5">Create One QR Code</h3>
+      <div className="bg-white rounded-2xl shadow-lg p-6" style={{ border: "1px solid #f0a500" }}>
+        <h3 className="text-xl font-semibold" style={{ color: "#556b2f", marginBottom: "12px" }}>Create One QR Code</h3>
         <form className="flex flex-col md:flex-row gap-4" onSubmit={handleManualSubmit}>
-          <input type="text" value={manualTableName} onChange={(e) => setManualTableName(e.target.value)}
+          <input
+            type="text"
+            value={manualTableName}
+            onChange={(e) => setManualTableName(e.target.value)}
             placeholder="Table Name/Number"
-            className="bg-orange-50 flex-1 border border-orange-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-1 focus:ring-orange-200 shadow-sm placeholder-gray-400"
-            required />
-          <button type="submit" disabled={loading} className="bg-green-900 text-white font-semibold px-6 py-2 rounded-lg shadow-md hover:bg-olive-700 transition-all transform hover:scale-105 disabled:opacity-50">
+            className="bg-orange-50 flex-1 border rounded-lg px-4 py-2 shadow-sm placeholder-gray-400"
+            style={{ borderColor: "#f0a500" }}
+            required
+          />
+          <button
+            type="submit"
+            disabled={loading}
+            className="bg-green-900 text-white font-semibold px-6 py-2 rounded-lg shadow-md hover:bg-green-700 transition-all transform hover:scale-105 disabled:opacity-50"
+          >
             {loading ? "Creating..." : "Generate QR"}
           </button>
         </form>
       </div>
 
       {/* Bulk QR */}
-      <div className="bg-white rounded-2xl shadow-lg p-6 border-green-900">
-        <h3 className="text-xl font-semibold text-olive-800 mb-5">Generate Multiple QR Codes</h3>
+      <div className="bg-white rounded-2xl shadow-lg p-6" style={{ border: "1px solid #28a745" }}>
+        <h3 className="text-xl font-semibold" style={{ color: "#556b2f", marginBottom: "12px" }}>Generate Multiple QR Codes</h3>
         <form className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end" onSubmit={handleBulkSubmit}>
           <div>
-            <label htmlFor="prefix" className="block text-sm font-medium text-olive-700">Prefix</label>
-            <input type="text" id="prefix" value={prefix} onChange={(e) => setPrefix(e.target.value)}
-              className="bg-orange-50 mt-1 block w-full border border-orange-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-1 focus:ring-orange-200 shadow-sm placeholder-gray-400" />
+            <label htmlFor="prefix" style={{ color: "#556b2f" }}>Prefix</label>
+            <input
+              type="text"
+              id="prefix"
+              value={prefix}
+              onChange={(e) => setPrefix(e.target.value)}
+              className="bg-orange-50 mt-1 block w-full border rounded-lg px-4 py-2 shadow-sm placeholder-gray-400"
+              style={{ borderColor: "#f0a500" }}
+            />
           </div>
           <div>
-            <label htmlFor="start" className="block text-sm font-medium text-olive-700">Start Number</label>
-            <input type="number" id="start" value={start} onChange={(e) => setStart(e.target.value)}
-              className="bg-orange-50 mt-1 block w-full border border-orange-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-1 focus:ring-orange-200 shadow-sm placeholder-gray-400" required />
+            <label htmlFor="start" style={{ color: "#556b2f" }}>Start Number</label>
+            <input
+              type="number"
+              id="start"
+              value={start}
+              onChange={(e) => setStart(e.target.value)}
+              className="bg-orange-50 mt-1 block w-full border rounded-lg px-4 py-2 shadow-sm placeholder-gray-400"
+              style={{ borderColor: "#f0a500" }}
+              required
+            />
           </div>
           <div>
-            <label htmlFor="end" className="block text-sm font-medium text-olive-700">End Number</label>
-            <input type="number" id="end" value={end} onChange={(e) => setEnd(e.target.value)}
-              className="bg-orange-50 mt-1 block w-full border border-orange-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-1 focus:ring-orange-200 shadow-sm placeholder-gray-400" required />
+            <label htmlFor="end" style={{ color: "#556b2f" }}>End Number</label>
+            <input
+              type="number"
+              id="end"
+              value={end}
+              onChange={(e) => setEnd(e.target.value)}
+              className="bg-orange-50 mt-1 block w-full border rounded-lg px-4 py-2 shadow-sm placeholder-gray-400"
+              style={{ borderColor: "#f0a500" }}
+              required
+            />
           </div>
-          <button type="submit" disabled={loading} className="bg-green-900 text-white font-semibold px-6 py-2 rounded-lg shadow-md hover:bg-olive-700 transition-all transform hover:scale-105 disabled:opacity-50">
+          <button
+            type="submit"
+            disabled={loading}
+            className="bg-green-900 text-white font-semibold px-6 py-2 rounded-lg shadow-md hover:bg-green-700 transition-all transform hover:scale-105 disabled:opacity-50"
+          >
             {loading ? "Generating..." : "Bulk Generate"}
           </button>
         </form>
@@ -198,19 +237,56 @@ const TableManagement = ({ shopId }) => {
       {/* Display QR Codes */}
       {generatedQRs.length > 0 && (
         <div className="bg-gray-50 rounded-2xl shadow-lg p-6">
-          <h3 className="text-xl font-semibold text-olive-800 mb-5">Generated QR Codes</h3>
+          <h3 className="text-xl font-semibold" style={{ color: "#556b2f", marginBottom: "12px" }}>Generated QR Codes</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {generatedQRs.map((table) => (
-              <div key={table.qrIdentifier} className="flex flex-col items-center p-4 border rounded-xl border-orange-300  hover:shadow-2xl transition transform hover:scale-105">
-                <p className="font-medium text-olive-800 mb-2">{table.tableNumber}</p>
-                <div id={`qr-${table.qrIdentifier}`} className="mb-2">
-                  <QRCode value={`${window.location.origin}/menu/${table.qrIdentifier}`} size={128} />
+              <div
+                key={table.qrIdentifier}
+                className="flex flex-col items-center p-4 border rounded-xl shadow-md"
+                style={{ borderColor: "#f0a500" }}
+              >
+                <p className="font-medium mb-2" style={{ color: "#556b2f" }}>{table.tableNumber}</p>
+
+                {/* Branded QR Template */}
+                <div
+                  id={`qr-template-${table.qrIdentifier}`}
+                  style={{
+                    background: "radial-gradient(circle, #ffaf60, #d77000)",
+                    padding: "16px",
+                    borderRadius: "12px",
+                    textAlign: "center",
+                    width: "220px",
+                    border: "1px solid #ccc",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                  }}
+                >
+                  <img src="/MENUMATE.png" alt="Logo" style={{ width: "60px", marginBottom: "12px" }} />
+                  <QRCode value={`${window.location.origin}/menu/${table.qrIdentifier}`} size={150} />
+                  <p style={{ marginTop: "12px", fontWeight: "bold", color: "#333" }}>Table: {table.tableNumber}</p>
+                  <p style={{ fontSize: "12px", color: "#777" }}>Make Your QR With MENUMATE</p>
                 </div>
-                <a href={`${window.location.origin}/menu/${table.qrIdentifier}`} target="_blank" rel="noopener noreferrer" className="text-olive-600 text-sm mb-2 hover:underline">Test Link</a>
-                <div className="flex gap-2">
-                  <button onClick={() => handleDownload(table.qrIdentifier, table.tableNumber)} className="bg-blue-500  text-white px-1 py-0 rounded hover:bg-blue-600 transition">Download</button>
-                  <button onClick={() => handlePrint(table.qrIdentifier)} className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 transition">Print</button>
-                  <button onClick={() => handleDelete(table.qrIdentifier)} className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition">Delete</button>
+
+                <div className="flex gap-2 mt-2">
+                  <button
+                    onClick={() => handleDownloadTemplate(table)}
+                    className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 transition"
+                  >
+                    Download
+                  </button>
+                  <button
+                    onClick={() => handlePrintTemplate(table)}
+                    className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 transition"
+                  >
+                    Print
+                  </button>
+                  <button
+                    onClick={() => handleDelete(table.qrIdentifier)}
+                    className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition"
+                  >
+                    Delete
+                  </button>
                 </div>
               </div>
             ))}
