@@ -6,7 +6,6 @@ import { fetchMenu } from "../features/menu/menuSlice";
 import MenuItemCard from "../components/molecules/MenuItemCard";
 import FloatingCartButton from "../components/atoms/FloatingCartButton";
 import TopBar from "../components/organisms/TopBar";
-// 1. New Import: Placeholder for the Bottom Navigation Bar
 import BottomNavBar from "../components/organisms/BottomNavBar";
 
 const MenuPage = () => {
@@ -27,13 +26,10 @@ const MenuPage = () => {
   const [openCategories, setOpenCategories] = useState({});
   const categoryRefs = useRef({});
 
-  // --- SCROLL LOGIC ---
   const scrollToCategory = (id) => {
     const element = categoryRefs.current[id];
     if (element) {
-      // Adjusted offset to account for TopBar (64px) + Category Navigation (~68px)
-      // We'll use 135px to ensure the category title is clearly visible below the sticky navs
-      const offset = 135; 
+      const offset = 130;
       const elementRect = element.getBoundingClientRect().top;
       const offsetPosition = window.scrollY + elementRect - offset;
       window.scrollTo({ top: offsetPosition, behavior: "smooth" });
@@ -41,7 +37,6 @@ const MenuPage = () => {
     }
   };
 
-  // --- SEARCH FILTER ---
   const filterMenuItems = (items, query) => {
     if (!query) return items;
     const lowerQuery = query.toLowerCase();
@@ -51,6 +46,7 @@ const MenuPage = () => {
         item.description.toLowerCase().includes(lowerQuery)
     );
   };
+
   const filteredItems = filterMenuItems(menuItems, searchQuery);
 
   const toggleCategory = (id) => {
@@ -60,90 +56,73 @@ const MenuPage = () => {
     }));
   };
 
-  // Fetch menu data
   useEffect(() => {
     if (qrIdentifier) {
       dispatch(fetchMenu(qrIdentifier));
     }
   }, [dispatch, qrIdentifier]);
 
-  // Set default active + open all categories by default
   useEffect(() => {
     if (categories && categories.length > 0) {
       if (!activeCategoryId) {
         setActiveCategoryId(categories[0]._id);
       }
       const allOpen = {};
-      categories.forEach((cat) => {
-        allOpen[cat._id] = true;
-      });
+      categories.forEach((cat) => (allOpen[cat._id] = true));
       setOpenCategories(allOpen);
     }
   }, [categories, activeCategoryId]);
 
-  if (loading) {
+  if (loading)
     return (
-      <div className="flex justify-center items-center h-screen">
+      <div className="flex justify-center items-center h-screen bg-[#110D09] text-gray-300">
         <p>Loading menu...</p>
       </div>
     );
-  }
 
-  if (error) {
+  if (error)
     return (
-      <div className="flex justify-center items-center h-screen text-red-500">
+      <div className="flex justify-center items-center h-screen bg-[#110D09] text-red-400">
         <p>Error: {error}</p>
       </div>
     );
-  }
 
-  if (!shops) {
+  if (!shops)
     return (
-      <div className="flex justify-center items-center h-screen text-gray-700">
+      <div className="flex justify-center items-center h-screen bg-[#110D09] text-gray-400">
         <p>No shop found for this QR code. Please check the URL.</p>
       </div>
     );
-  }
 
   return (
-    // Note: Added pb-20 to the container to ensure content is visible above the fixed bottom bar.
-    <div className="bg-gray-50 min-h-screen pb-20"> 
-      {/* Top Bar (Sticky) */}
-      <TopBar shopName={shops.name} shopAddress={shops.address} table={table}/>
+    <div className="bg-gradient-to-b from-[#211B14] to-[#110D09] text-gray-200 min-h-screen pb-24">
+      <TopBar shopName={shops.name} shopAddress={shops.address} table={table} />
 
-      {/* Category Navigation (Square with Icon + Label) - Sticky */}
+      {/* CATEGORY SCROLLER */}
       {!searchQuery && (
-        <div className="sticky top-[64px] z-20 bg-white px-2 overflow-x-auto shadow-md border-b border-gray-200">
-          <div className="flex space-x-6 py-3">
+        <div className="sticky top-[50px] z-20 bg-[#211B14]/90 backdrop-blur-md px-3 border-b border-white/10 overflow-x-auto">
+          <div className="flex space-x-3 py-3">
             {(categories || []).map((category, index) => (
               <div
                 key={category._id}
-                className="flex flex-col items-center cursor-pointer flex-shrink-0" // Added flex-shrink-0
                 onClick={() => scrollToCategory(category._id)}
+                className="flex flex-col items-center cursor-pointer flex-shrink-0"
               >
-                {/* Square Box with Icon */}
                 <div
-                  className={`w-16 h-16 flex items-center justify-center rounded-lg border-2 transition-all 
-                  ${
+                  className={`w-16 h-14 flex items-center justify-center rounded-xl border text-lg transition-all duration-300 ${
                     activeCategoryId === category._id
-                      ? "bg-green-800 border-green-900 text-white shadow-md"
-                      : "bg-orange-50 border-orange-300 text-gray-600 hover:bg-gray-200"
+                      ? "bg-amber-500/20 border-amber-500 text-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.4)]"
+                      : "bg-gray-600/10 border-gray-600/20 text-gray-300 hover:bg-gray-600/20"
                   }`}
                 >
-                  {/* Placeholder Icon (replace with category.icon if exists) */}
-                  <span className="text-xl">
-                    {category.icon || ["🍔", "🍕", "🥤", "🍰", "🥗"][index % 5]}
-                  </span>
+                  {category.icon || [<svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-soup"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 11h16a1 1 0 0 1 1 1v.5c0 1.5 -2.517 5.573 -4 6.5v1a1 1 0 0 1 -1 1h-8a1 1 0 0 1 -1 -1v-1c-1.687 -1.054 -4 -5 -4 -6.5v-.5a1 1 0 0 1 1 -1z" /><path d="M12 4a2.4 2.4 0 0 0 -1 2a2.4 2.4 0 0 0 1 2" /><path d="M16 4a2.4 2.4 0 0 0 -1 2a2.4 2.4 0 0 0 1 2" /><path d="M8 4a2.4 2.4 0 0 0 -1 2a2.4 2.4 0 0 0 1 2" /></svg>][index % 1]}
                 </div>
-
-                {/* Category Name below square */}
                 <p
-                  className={`mt-2 text-xs font-medium text-center w-16 truncate 
-                    ${
-                      activeCategoryId === category._id
-                        ? "text-green-900"
-                        : "text-gray-600"
-                    }`}
+                  className={`mt-1 text-[11px] font-semibold text-center truncate w-16 ${
+                    activeCategoryId === category._id
+                      ? "text-amber-400"
+                      : "text-gray-400"
+                  }`}
                 >
                   {category.name}
                 </p>
@@ -153,28 +132,26 @@ const MenuPage = () => {
         </div>
       )}
 
-      {/* Page Content */}
-      <div className="container mx-auto p-4 md:px-8 lg:px-12">
+      {/* MENU CONTENT */}
+      <div className="container mx-auto px-3 sm:px-6 lg:px-8 mt-3">
         {!isFoodCourt && (
-          <div className="space-y-4">
-            {/* Case 1: Search results */}
+          <div className="space-y-6">
             {searchQuery ? (
-              <div className="mb-8 pt-4">
-                <h2 className="text-xl font-bold text-secondary mb-4">
+              <div className="pt-2">
+                <h2 className="text-xl font-bold text-amber-400 mb-3">
                   Search Results ({filteredItems.length})
                 </h2>
                 {filteredItems.length > 0 ? (
-                  <div className="flex flex-col space-y-2 bg-white rounded-lg shadow-md p-4">
+                  <div className="space-y-1">
                     {filteredItems.map((item) => (
                       <MenuItemCard key={item._id} item={item} />
                     ))}
                   </div>
                 ) : (
-                  <p className="text-gray-500">No items found</p>
+                  <p className="text-gray-500">No items found.</p>
                 )}
               </div>
             ) : (
-              // Case 2: Normal category-wise rendering
               (categories || []).map((category) => {
                 const items = (menuItems || []).filter(
                   (item) => item.category === category._id
@@ -185,20 +162,25 @@ const MenuPage = () => {
                   <div
                     key={category._id}
                     ref={(el) => (categoryRefs.current[category._id] = el)}
-                    className="mb-8 pt-4"
+                    className="mb-6"
                   >
                     <h2
                       onClick={() => toggleCategory(category._id)}
-                      className="cursor-pointer text-xl font-bold text-secondary mb-4 flex justify-between items-center"
+                      className="cursor-pointer text-xl font-semibold text-amber-400 mb-3 flex justify-between items-center"
                     >
-                      {category.name} ({items.length})
-                      <span className="text-gray-400 transform transition-transform duration-200">
-                        {isOpen ? <span className="text-lg">▲</span> : <span className="text-lg">▼</span>}
+                      <span>
+                        {category.name}{" "}
+                        <span className="text-xs text-gray-400">
+                          ({items.length})
+                        </span>
+                      </span>
+                      <span className="text-gray-400 text-sm">
+                        {isOpen ? "︿" : "﹀"}
                       </span>
                     </h2>
 
                     {isOpen && (
-                      <div className="flex flex-col space-y-2 bg-white rounded-lg shadow-md p-4">
+                      <div className="space-y-1 bg-black/20 rounded-xl p-3 border border-white/10">
                         {items.map((item) => (
                           <MenuItemCard key={item._id} item={item} />
                         ))}
@@ -212,19 +194,18 @@ const MenuPage = () => {
         )}
 
         {isFoodCourt && (
-          <div className="text-center p-10 bg-white rounded-lg shadow-lg">
-            <h2 className="text-3xl font-semibold text-accent">Food Court Menu</h2>
-            <p className="text-gray-600 mt-2">
+          <div className="text-center p-10 bg-black/20 backdrop-blur-sm rounded-xl border border-white/10">
+            <h2 className="text-3xl font-semibold text-amber-400">
+              Food Court Menu
+            </h2>
+            <p className="text-gray-300 mt-2">
               Displaying menu items from multiple shops.
             </p>
           </div>
         )}
       </div>
 
-      
-      
-      {/* 2. New Component Placement */}
-      <BottomNavBar /> 
+      <BottomNavBar />
       <FloatingCartButton />
     </div>
   );

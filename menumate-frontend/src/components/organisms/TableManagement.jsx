@@ -251,7 +251,7 @@ const TableManagement = ({ shopId }) => {
                 <div
                   id={`qr-template-${table.qrIdentifier}`}
                   style={{
-                    background: "radial-gradient(circle, #ffaf60, #d77000)",
+                    background: "linear-gradient(circle, #ffaf60, #d77000)",
                     padding: "16px",
                     borderRadius: "12px",
                     textAlign: "center",
@@ -262,7 +262,7 @@ const TableManagement = ({ shopId }) => {
                     alignItems: "center",
                   }}
                 >
-                  <img src="/MENUMATE.png" alt="Logo" style={{ width: "60px", marginBottom: "12px" }} />
+                  <img src="/MENUMATE real logo.png" alt="Logo" style={{ width: "100px", marginBottom: "12px" }} />
                   <QRCode value={`${window.location.origin}/menu/${table.qrIdentifier}`} size={150} />
                   <p style={{ marginTop: "12px", fontWeight: "bold", color: "#333" }}>Table: {table.tableNumber}</p>
                   <p style={{ fontSize: "12px", color: "#777" }}>Make Your QR With MENUMATE</p>

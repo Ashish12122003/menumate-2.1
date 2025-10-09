@@ -6,183 +6,123 @@ import { MdDelete } from "react-icons/md";
 import { FaPlus, FaMinus } from "react-icons/fa";
 
 import { placeOrder } from "../features/order/orderSlice";
-import {
-  clearCart,
-  incrementItemQuantity,
-  decrementItemQuantity,
-} from "../features/cart/cartSlice";
-import { syncCart } from "../api/cartService"; // ✅ import syncCart
+import { clearCart, incrementItemQuantity, decrementItemQuantity } from "../features/cart/cartSlice";
+import { syncCart } from "../api/cartService";
 
 const CartPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { items, totalAmount } = useSelector((state) => state.cart);
   const { table, shop, qrIdentifier } = useSelector((state) => state.menu);
-
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // ✅ Place Order Function
   const handlePlaceOrder = async () => {
-    if (!shop || !table || items.length === 0) {
-      alert("Cart is empty or shop/table missing");
-      return;
-    }
-
+    if (!shop || !table || items.length === 0) return alert("Cart is empty or shop/table missing");
     setIsProcessing(true);
-
     try {
-      // ✅ Sync the cart with backend
-      await syncCart({
-        shop: shop?._id || shop,
-        table: table?._id || table,
-        items: items,
-      });
-
-      // ✅ Prepare order payload
+      await syncCart({ shop: shop?._id || shop, table: table?._id || table, items });
       const orderData = {
-      paymentMethod: "COD",
-      tableId: table._id || table,
-      shopId: shop._id || shop,
-      items: items.map(item => ({
-        menuItem: item._id || item.menuItem, // make sure this is correct ID
-        quantity: item.quantity,
-        price: item.price,
-      })),
-    };
-
-      // ✅ Dispatch order creation
-      const resultAction = await dispatch(placeOrder(orderData));
-
-      if (placeOrder.fulfilled.match(resultAction)) {
-        const newOrderId =
-          resultAction.payload?.order?._id ||
-          resultAction.payload?.data?.order?._id;
-
+        paymentMethod: "COD",
+        tableId: table._id || table,
+        shopId: shop._id || shop,
+        items: items.map((i) => ({ menuItem: i._id || i.menuItem, quantity: i.quantity, price: i.price })),
+      };
+      const result = await dispatch(placeOrder(orderData));
+      if (placeOrder.fulfilled.match(result)) {
+        const newOrderId = result.payload?.order?._id || result.payload?.data?.order?._id;
         dispatch(clearCart());
-        if (newOrderId) {
-          navigate(`/order/${newOrderId}`);
-        } else {
-          alert("Order placed but could not find order ID!");
-        }
-      } else {
-        alert("Order placement failed.");
-      }
+        if (newOrderId) navigate(`/order/${newOrderId}`);
+        else alert("Order placed but no ID found!");
+      } else alert("Order placement failed.");
     } catch (err) {
-      console.error("Order failed:", err);
-      alert("Order failed. Please try again.");
-    } finally {
-      setIsProcessing(false);
-    }
+      console.error(err);
+      alert("Order failed. Try again.");
+    } finally { setIsProcessing(false); }
   };
 
-  // ✅ Quantity handlers
   const handleIncrement = (id) => dispatch(incrementItemQuantity(id));
   const handleDecrement = (id) => dispatch(decrementItemQuantity(id));
-
   const handleDelete = (id) => {
     const item = items.find((i) => i._id === id);
-    if (item) {
-      for (let i = 0; i < item.quantity; i++) dispatch(decrementItemQuantity(id));
-    }
+    if (item) for (let i = 0; i < item.quantity; i++) dispatch(decrementItemQuantity(id));
   };
 
   const menuUrl = qrIdentifier ? `/menu/${qrIdentifier}` : "/";
 
-  // ✅ Empty Cart View
   if (items.length === 0)
     return (
-      <div className="flex flex-col items-center justify-center h-screen text-center bg-gray-50 text-secondary p-6">
-        <h1 className="text-3xl font-bold mb-3"><Link to={menuUrl}>Your Cart is Empty</Link></h1>
-        <p className="text-gray-500 mb-6">
-          Start by adding some delicious items from the menu.
-        </p>
-        <Link
-          to={menuUrl}
-          className="bg-primary text-black font-bold py-3 px-7 rounded-full shadow-lg hover:bg-orange-700 transition-all"
-        >
+      <div className="flex flex-col items-center justify-center h-screen text-center bg-[#110D09] text-gray-300 p-4">
+        <h1 className="text-2xl font-bold mb-2">
+          <Link to={menuUrl} className="text-amber-400 hover:underline">Your Cart is Empty</Link>
+        </h1>
+        <p className="text-gray-400 mb-4">Add some delicious items from the menu.</p>
+        <Link to={menuUrl} className="bg-amber-500 text-black font-bold py-2 px-6 rounded-full shadow hover:bg-amber-600 transition">
           Go to Menu
         </Link>
       </div>
     );
 
-  // ✅ Main Cart Page
   return (
-    <div className="min-h-screen p-6 bg-gray-50 text-secondary">
-      <div className="max-w-4xl mx-auto bg-white rounded-xl p-6 shadow-xl border border-gray-200">
-        <h1 className="text-3xl font-bold text-center mb-8 text-secondary">
-          Your Order
-        </h1>
+    <div className="min-h-screen p-4 bg-gradient-to-b from-[#211B14] to-[#110D09] text-gray-200 pb-20">
+      <div className="max-w-3xl mx-auto bg-black/20 border border-white/10 rounded-lg p-4 shadow">
+        <h1 className="text-2xl font-bold text-center mb-4 text-amber-400">Your Order</h1>
 
-        {/* Item List */}
-        <div className="flex flex-col space-y-4">
+        <div className="flex flex-col space-y-2">
           {items.map((item) => (
-            <div
-              key={item._id || item.menuItem}
-              className="flex justify-between items-center py-3 border-b border-gray-200 last:border-b-0"
-            >
-              <div className="flex-1 pr-4">
-                <h2 className="text-lg font-semibold text-secondary">{item.name}</h2>
-                <p className="text-sm text-gray-500 mt-1">
-                  ₹{item.price.toFixed(2)} x {item.quantity}
-                </p>
-                <p className="text-sm text-primary font-bold">
-                  Subtotal: ₹{(item.price * item.quantity).toFixed(2)}
-                </p>
+            <div key={item._id || item.menuItem} className="flex justify-between items-center py-2 border-b border-white/10 last:border-b-0">
+              <div className="flex-1 pr-2">
+                <h2 className="text-lg font-semibold text-amber-400">{item.name}</h2>
+                <p className="text-sm text-gray-400">₹{item.price.toFixed(2)} x {item.quantity}</p>
+                <p className="text-sm text-amber-500 font-bold">Subtotal: ₹{(item.price * item.quantity).toFixed(2)}</p>
               </div>
 
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
                 {/* Quantity Selector */}
-                <div className="flex items-center space-x-2 border border-orange-500 rounded-full text-orange-500">
+                <div className="flex items-center space-x-1 border border-amber-500 rounded-full text-amber-400">
                   <button
                     onClick={() => handleDecrement(item._id || item.menuItem)}
-                    className="w-8 h-8 flex items-center justify-center text-lg rounded-full transition hover:bg-orange-50"
+                    className="w-6 h-6 flex items-center justify-center text-sm rounded-full hover:bg-amber-600/20 transition"
                   >
                     <FaMinus size={10} />
                   </button>
-                  <span className="font-bold text-sm text-secondary">
-                    {item.quantity}
-                  </span>
+                  <span className="font-bold text-sm">{item.quantity}</span>
                   <button
                     onClick={() => handleIncrement(item._id || item.menuItem)}
-                    className="w-8 h-8 flex items-center justify-center text-lg rounded-full transition hover:bg-orange-50"
+                    className="w-6 h-6 flex items-center justify-center text-sm rounded-full hover:bg-amber-600/20 transition"
                   >
                     <FaPlus size={10} />
                   </button>
                 </div>
 
-                {/* Delete Button */}
+                {/* Delete Button matching FloatingCartButton theme */}
                 <button
                   onClick={() => handleDelete(item._id || item.menuItem)}
-                  className="text-red-500 hover:text-red-700 transition-colors p-1"
+                  className="w-6 h-6 flex items-center justify-center rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-400 text-[#1a1a1a] shadow-lg shadow-amber-800/40 hover:scale-110 transition-all duration-200"
                   title="Remove Item"
                 >
-                  <MdDelete size={24} />
+                  <MdDelete size={16} />
                 </button>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Total */}
-        <div className="flex justify-between items-center mt-8 pt-4 border-t-2 border-dashed border-gray-300">
-          <span className="text-xl font-bold text-secondary">Total:</span>
-          <span className="text-2xl font-extrabold text-primary">
-            ₹{totalAmount.toFixed(2)}
-          </span>
+        <div className="flex justify-between items-center mt-4 pt-2 border-t border-white/20 text-sm font-bold text-amber-400">
+          <span>Total:</span>
+          <span className="text-lg text-amber-500">₹{totalAmount.toFixed(2)}</span>
         </div>
       </div>
 
-      {/* Buttons */}
-      <div className="flex justify-center space-x-4 mt-8 max-w-4xl mx-auto">
+      <div className="flex justify-center space-x-3 mt-4 max-w-3xl mx-auto">
         <Link
           to={menuUrl}
-          className="bg-gray-300 text-secondary font-bold py-3 px-8 rounded-full shadow-md hover:bg-gray-400 transition-all"
+          className="bg-gray-600 text-gray-200 font-bold py-2 px-4 rounded-full shadow hover:bg-gray-700 transition"
         >
           Continue Shopping
         </Link>
         <button
           onClick={handlePlaceOrder}
-          className="bg-accent text-black font-bold py-3 px-8 rounded-full shadow-lg hover:bg-blue-600 transition-all"
+          className="bg-amber-500 text-black font-bold py-2 px-3 rounded-full shadow hover:bg-amber-600 transition"
           disabled={items.length === 0 || !shop || !table || isProcessing}
         >
           {isProcessing ? "Processing..." : "Proceed to Pay"}

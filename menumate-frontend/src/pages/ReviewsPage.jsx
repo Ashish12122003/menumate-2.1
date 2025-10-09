@@ -10,9 +10,9 @@ import { FaStar, FaRegStar } from 'react-icons/fa';
 
 const ReviewsPage = () => {
   const dispatch = useDispatch();
-  const { shopId: shopIdParam } = useParams(); // Try to get shopId from URL first
-  const { shops } = useSelector((state) => state.menu); // Fallback: get shop from Redux state
-  const shopId = shopIdParam || shops?.[0]?._id; // Use URL param or first shop from state
+  const { shopId: shopIdParam } = useParams();
+  const { shops } = useSelector((state) => state.menu);
+  const shopId = shopIdParam || shops?.[0]?._id;
 
   const { shopReviews, averageRating = 0, loading, error } = useSelector((state) => state.review);
   const { userOrders } = useSelector((state) => state.order);
@@ -25,84 +25,95 @@ const ReviewsPage = () => {
   );
 
   useEffect(() => {
-    if (shopId) {
-      dispatch(getShopReviews(shopId));
-    }
+    if (shopId) dispatch(getShopReviews(shopId));
   }, [dispatch, shopId]);
 
   const renderStars = (rating) => (
-    <div className="flex space-x-0.5">
+    <div className="flex space-x-0.5 text-sm">
       {[1, 2, 3, 4, 5].map((i) =>
         i <= rating ? (
-          <FaStar key={i} className="text-yellow-500" />
+          <FaStar key={i} className="text-amber-400" />
         ) : (
-          <FaRegStar key={i} className="text-gray-300" />
+          <FaRegStar key={i} className="text-gray-500" />
         )
       )}
     </div>
   );
 
   if (loading)
-    return <div className="flex justify-center items-center h-screen">Loading reviews...</div>;
+    return (
+      <div className="flex justify-center items-center h-screen bg-[#110D09] text-gray-300 text-sm">
+        Loading reviews...
+      </div>
+    );
 
   if (error)
-    return <div className="text-red-500 text-center mt-10">Error: {error}</div>;
+    return (
+      <div className="flex justify-center items-center h-screen bg-[#110D09] text-red-500 text-sm">
+        Error: {error}
+      </div>
+    );
 
   return (
-    <div className="bg-gray-50 min-h-screen pb-20">
-      <div className="container mx-auto p-4 md:px-8 lg:px-12">
-        <h1 className="text-4xl font-bold text-secondary text-center mb-6">Customer Reviews</h1>
+    <div className="bg-gradient-to-b from-[#211B14] to-[#110D09] text-gray-200 min-h-screen pb-24 text-sm">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+        <h1 className="text-3xl sm:text-4xl font-bold text-amber-400 text-center mb-4">
+          Customer Reviews
+        </h1>
 
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8 text-center border-t-4 border-primary">
-          <p className="text-xl font-medium text-gray-600">Average Rating</p>
-          <div className="flex justify-center items-center my-2 space-x-2">
-            <p className="text-6xl font-extrabold text-primary">
+        <div className="bg-black/20 border border-white/10 rounded-xl p-4 mb-6 text-center">
+          <p className="text-base font-medium text-gray-400">Average Rating</p>
+          <div className="flex justify-center items-center my-1 space-x-2">
+            <p className="text-4xl sm:text-5xl font-extrabold text-amber-400">
               {averageRating?.toFixed(1) ?? '0.0'}
             </p>
             <div className="flex flex-col items-start">
               {renderStars(Math.round(averageRating))}
-              <p className="text-sm text-gray-500 mt-1">{shopReviews.length} Ratings</p>
+              <p className="text-xs text-gray-500 mt-1">{shopReviews.length} Ratings</p>
             </div>
           </div>
 
           {reviewableOrders?.length > 0 ? (
-            <div className="mt-6 pt-4 border-t">
-              <p className="text-md text-gray-700 mb-3">Had a great experience?</p>
+            <div className="mt-4 pt-2 border-t border-gray-700">
+              <p className="text-sm text-gray-400 mb-2">Had a great experience?</p>
               <Button
                 variant="primary"
                 onClick={() => {
                   setSelectedOrderId(reviewableOrders[0]._id);
                   setIsModalOpen(true);
                 }}
-                className="w-full sm:w-auto"
+                className="w-full sm:w-auto text-sm py-1 px-2"
               >
                 Leave a Review!
               </Button>
             </div>
           ) : (
-            <p className="mt-4 text-gray-500">You have no orders eligible for review.</p>
+            <p className="mt-2 text-gray-500 text-xs">You have no orders eligible for review.</p>
           )}
         </div>
 
-        <h2 className="text-2xl font-bold text-secondary mb-4">What Customers Say</h2>
-        <div className="space-y-4">
+        <h2 className="text-xl sm:text-2xl font-bold text-amber-400 mb-2">What Customers Say</h2>
+        <div className="space-y-2">
           {shopReviews.length > 0 ? (
             shopReviews.map((review) => (
-              <div key={review._id} className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-accent/50">
-                <div className="flex justify-between items-center mb-2">
-                  <h3 className="text-lg font-semibold text-gray-800">
+              <div
+                key={review._id}
+                className="bg-black/20 border border-white/10 rounded-xl p-3"
+              >
+                <div className="flex justify-between items-center mb-1">
+                  <h3 className="text-sm sm:text-base font-semibold text-amber-400">
                     {review.user?.name || 'A MenuMate Customer'}
                   </h3>
                   {renderStars(review.rating)}
                 </div>
-                <p className="text-gray-600 italic">"{review.comment}"</p>
-                <p className="text-xs text-gray-400 mt-2 text-right">
+                <p className="text-xs text-gray-400 italic">"{review.comment}"</p>
+                <p className="text-[10px] text-gray-500 mt-1 text-right">
                   Reviewed on {new Date(review.createdAt).toLocaleDateString()}
                 </p>
               </div>
             ))
           ) : (
-            <p className="text-gray-500 p-4 bg-white rounded-lg shadow-sm">
+            <p className="text-gray-500 p-3 bg-black/20 rounded-xl border border-white/10 text-xs">
               Be the first to review this shop!
             </p>
           )}
