@@ -14,11 +14,11 @@ const FloatingCartButton = () => {
     <button
       onClick={() => navigate("/cart")}
       aria-label="View Cart"
-      className="fixed bottom-20 right-5 sm:right-8 px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-400 text-[#1a1a1a] font-semibold flex items-center gap-2 shadow-lg shadow-amber-800/40 hover:shadow-amber-400/40 transition-all duration-300 hover:scale-105 backdrop-blur-md animate-slideUp z-50"
+      className="fixed bottom-20 right-5 sm:right-8 flex items-center gap-2 px-5 py-3 rounded-full bg-[#B4161B] text-white font-semibold shadow-lg shadow-red-300 hover:bg-[#D92A2A] hover:scale-105 transition-all duration-300 z-50"
     >
       <div className="relative flex items-center">
-        <FaShoppingCart size={18} className="text-[#1a1a1a]" />
-        <span className="absolute -top-2 -right-2 bg-[#1a1a1a] text-amber-400 text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center shadow-inner shadow-amber-600/40">
+        <FaShoppingCart size={18} className="text-white" />
+        <span className="absolute -top-2 -right-2 bg-white text-[#B4161B] text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center shadow-md">
           {totalItems}
         </span>
       </div>

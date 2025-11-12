@@ -1,8 +1,9 @@
 // src/pages/admin/AdminLoginPage.jsx
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { loginAdminUser } from "../../features/admin/adminAuthSlice";
+import { FaEnvelope, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
 
 const AdminLoginPage = () => {
   const [email, setEmail] = useState("");
@@ -18,7 +19,6 @@ const AdminLoginPage = () => {
 
   const from = location.state?.from || "/admin/dashboard";
 
-  // redirect after login
   useEffect(() => {
     if (isAuthenticated) {
       navigate(from, { replace: true });
@@ -33,152 +33,104 @@ const AdminLoginPage = () => {
     }
   };
 
-  // ---------- inline styles ----------
-  const pageStyle = {
-    minHeight: "100vh",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    background: "linear-gradient(180deg,#111827 0%,#030712 100%)",
-    padding: 24,
-    boxSizing: "border-box",
-    fontFamily:
-      "'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial",
-  };
-
-  const cardStyle = {
-    width: "100%",
-    maxWidth: 480,
-    background: "rgba(255,255,255,0.03)",
-    borderRadius: 16,
-    padding: 28,
-    boxShadow: "0 10px 30px rgba(0,0,0,0.7)",
-    border: "1px solid rgba(255,255,255,0.06)",
-    color: "#e6eef8",
-    backdropFilter: "blur(6px)",
-  };
-
-  const headerStyle = {
-    marginBottom: 20,
-    fontSize: 26,
-    fontWeight: 700,
-    textAlign: "center",
-    color: "#fff",
-  };
-
-  const fieldStyle = { marginBottom: 16, display: "flex", flexDirection: "column" };
-
-  const labelStyle = {
-    fontSize: 13,
-    marginBottom: 6,
-    color: "#cbd5e1",
-    fontWeight: 600,
-  };
-
-  const inputStyle = {
-    padding: "12px 14px",
-    borderRadius: 10,
-    border: "1px solid rgba(255,255,255,0.08)",
-    background: "rgba(255,255,255,0.05)",
-    color: "#f8fafc",
-    fontSize: 15,
-    outline: "none",
-  };
-
-  const errorStyle = {
-    background: "rgba(255,72,66,0.08)",
-    color: "#ffb4b4",
-    border: "1px solid rgba(255,72,66,0.2)",
-    padding: "10px 12px",
-    borderRadius: 10,
-    marginBottom: 12,
-    fontSize: 13,
-    textAlign: "center",
-  };
-
-  const buttonStyle = {
-    width: "100%",
-    padding: "12px 16px",
-    borderRadius: 999,
-    border: "none",
-    background: "linear-gradient(90deg,#2563eb 0%,#4f46e5 100%)",
-    color: "#fff",
-    fontWeight: 700,
-    fontSize: 15,
-    cursor: "pointer",
-    boxShadow: "0 8px 30px rgba(37,99,235,0.25)",
-    transition: "all 0.2s ease",
-  };
-
-  const buttonDisabled = {
-    opacity: 0.6,
-    cursor: "not-allowed",
-    boxShadow: "none",
-  };
-
   return (
-    <div style={pageStyle}>
-      <form onSubmit={handleSubmit} style={cardStyle}>
-        <h2 style={headerStyle}>Admin Login</h2>
-
-        {error && <div style={errorStyle}>{error}</div>}
-
-        <div style={fieldStyle}>
-          <label htmlFor="email" style={labelStyle}>
-            Email
-          </label>
-          <input
-            type="email"
-            id="email"
-            value={email}
-            placeholder="admin@company.com"
-            onChange={(e) => setEmail(e.target.value)}
-            style={inputStyle}
-            required
-          />
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#fff4f4] to-[#fffafa] px-4">
+      <form
+        onSubmit={handleSubmit}
+        className="w-full max-w-md bg-white border border-[#B4161B]/20 rounded-2xl shadow-lg p-8 space-y-6"
+      >
+        {/* Header */}
+        <div className="text-center mb-2">
+          <h1 className="text-3xl font-bold text-[#B4161B]">MenuMate Admin</h1>
+          <h2 className="text-lg text-gray-600 font-medium mt-1">
+            Secure Login Portal
+          </h2>
         </div>
 
-        <div style={fieldStyle}>
-          <label htmlFor="password" style={labelStyle}>
+        {error && (
+          <div className="bg-[#FFF1F1] text-[#B4161B] border border-[#B4161B]/30 text-sm rounded-lg p-3 text-center">
+            {error}
+          </div>
+        )}
+
+        {/* Email */}
+        <div>
+          <label
+            htmlFor="email"
+            className="block text-sm font-semibold text-gray-700 mb-1"
+          >
+            Email
+          </label>
+          <div className="relative">
+            <FaEnvelope className="absolute left-3 top-3.5 text-gray-400" />
+            <input
+              type="email"
+              id="email"
+              placeholder="admin@menumate.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="w-full pl-10 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B4161B]/80 text-gray-800"
+            />
+          </div>
+        </div>
+
+        {/* Password */}
+        <div>
+          <label
+            htmlFor="password"
+            className="block text-sm font-semibold text-gray-700 mb-1"
+          >
             Password
           </label>
-          <div style={{ position: "relative" }}>
+          <div className="relative">
+            <FaLock className="absolute left-3 top-3.5 text-gray-400" />
             <input
               type={showPassword ? "text" : "password"}
               id="password"
+              placeholder="Enter your password"
               value={password}
-              placeholder="Enter password"
               onChange={(e) => setPassword(e.target.value)}
-              style={{ ...inputStyle, paddingRight: 44 }}
               required
+              className="w-full pl-10 pr-10 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B4161B]/80 text-gray-800"
             />
             <button
               type="button"
-              onClick={() => setShowPassword((s) => !s)}
-              style={{
-                position: "absolute",
-                right: 8,
-                top: "50%",
-                transform: "translateY(-50%)",
-                border: "none",
-                background: "transparent",
-                color: "#cbd5e1",
-                cursor: "pointer",
-                fontSize: 14,
-              }}
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-3.5 text-gray-500 hover:text-[#B4161B]"
             >
-              {showPassword ? "🙈" : "👁️"}
+              {showPassword ? <FaEyeSlash /> : <FaEye />}
             </button>
           </div>
         </div>
 
+        {/* Submit */}
         <button
           type="submit"
           disabled={loading}
-          style={{ ...buttonStyle, ...(loading ? buttonDisabled : {}) }}
+          className={`w-full py-3 mt-2 rounded-full text-white font-semibold transition-all ${
+            loading
+              ? "bg-[#B4161B]/60 cursor-not-allowed"
+              : "bg-[#B4161B] hover:bg-[#D92A2A] shadow-md hover:shadow-lg"
+          }`}
         >
           {loading ? "Logging in..." : "Login"}
         </button>
+
+        {/* Footer */}
+        <p className="text-center text-sm text-gray-600 mt-2">
+          New admin?{" "}
+          <Link
+            to="/admin/register"
+            className="text-[#B4161B] font-semibold hover:underline"
+          >
+            Register here
+          </Link>
+        </p>
+
+        <div className="text-center text-xs text-gray-400 mt-4">
+          MenuMate Admin Portal © 2025
+        </div>
       </form>
     </div>
   );

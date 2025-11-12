@@ -1,200 +1,215 @@
-// src/components/molecules/MenuItemForm.jsx
-
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { createMenuItem } from "../../api/vendorService";
 import { addMenuItem } from "../../features/vendor/shopSlice";
 
 const MenuItemForm = ({ shopId }) => {
-    // State variables for form fields
-    const [name, setName] = useState("");
-    const [description, setDescription] = useState("");
-    const [price, setPrice] = useState("");
-    const [category, setCategory] = useState("");
-    const [image, setImage] = useState(null);
-    const [isAvailable, setIsAvailable] = useState(true); // New: Default to true
-    const [isVegetarian, setIsVegetarian] = useState(false); // New: Default to Non-Veg
-    
-    // UI state
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
-    const [success, setSuccess] = useState(null);
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [price, setPrice] = useState("");
+  const [category, setCategory] = useState("");
+  const [image, setImage] = useState(null);
+  const [isAvailable, setIsAvailable] = useState(true);
+  const [isVegetarian, setIsVegetarian] = useState(false);
 
-    const dispatch = useDispatch();
-    const { categories } = useSelector((state) => state.shops);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        setError(null);
-        setSuccess(null); 
-        
-        // --- Input Validation Check ---
-        if (!image) {
-            setError("Image upload is required for this menu item.");
-            setLoading(false);
-            return;
-        }
+  const dispatch = useDispatch();
+  const { categories } = useSelector((state) => state.shops);
 
-        try {
-            const formData = new FormData();
-            formData.append("name", name);
-            formData.append("description", description);
-            formData.append("price", Number(price));
-            formData.append("categoryId", category);
-            // CRITICAL FIX: Append the new boolean values as strings
-            formData.append("isAvailable", isAvailable); 
-            formData.append("isVegetarian", isVegetarian); 
-            
-            if (image) formData.append("image", image);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
 
-            const newItem = await createMenuItem(shopId, formData);
-            
-            // Assuming newItem.data is the correct payload format for Redux
-            dispatch(addMenuItem(newItem.data));
+    if (!image) {
+      setError("Please upload an image for this menu item.");
+      setLoading(false);
+      return;
+    }
 
-            // Set success message and clear form fields after successful submission
-            setSuccess(`Item "${name}" added successfully!`); 
-            setName("");
-            setDescription("");
-            setPrice("");
-            setCategory("");
-            setIsAvailable(true); // Reset state
-            setIsVegetarian(false); // Reset state
-            setImage(null);
-            
-        } catch (err) {
-            const errorMessage = err.response?.data?.message || 'Server did not respond. Check network or server logs.';
-            setError(errorMessage);
-            setSuccess(null);
-        } finally {
-            setLoading(false);
-        }
-    };
+    try {
+      const formData = new FormData();
+      formData.append("name", name);
+      formData.append("description", description);
+      formData.append("price", Number(price));
+      formData.append("categoryId", category);
+      formData.append("isAvailable", isAvailable);
+      formData.append("isVegetarian", isVegetarian);
+      if (image) formData.append("image", image);
 
-    return (
-        <form
-            onSubmit={handleSubmit}
-            className="bg-orange-50 rounded-2xl shadow-inner p-6 md:p-8 mb-8 transition-all duration-200"
+      const newItem = await createMenuItem(shopId, formData);
+      dispatch(addMenuItem(newItem.data));
+
+      setSuccess(`Item "${name}" added successfully!`);
+      setName("");
+      setDescription("");
+      setPrice("");
+      setCategory("");
+      setIsAvailable(true);
+      setIsVegetarian(false);
+      setImage(null);
+    } catch (err) {
+      setError(
+        err.response?.data?.message ||
+          "Something went wrong. Please check your server or internet connection."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className="bg-white rounded-2xl border border-gray-200 shadow-md p-6 md:p-8 mb-8 transition-all"
+    >
+      <h4 className="text-2xl font-bold text-[#B4161B] mb-4 border-b border-gray-100 pb-2">
+        Add New Menu Item
+      </h4>
+
+      {error && (
+        <p className="text-red-600 font-medium mb-4 bg-red-50 px-3 py-2 rounded-lg border border-red-100">
+          {error}
+        </p>
+      )}
+      {success && (
+        <p className="text-green-700 font-medium mb-4 bg-green-50 px-3 py-2 rounded-lg border border-green-100">
+          {success}
+        </p>
+      )}
+
+      {/* Name & Price */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+        <div>
+          <label className="block text-gray-700 font-semibold mb-1">
+            Item Name
+          </label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+            placeholder="Enter item name"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#B4161B]/60 focus:border-[#B4161B] transition"
+          />
+        </div>
+        <div>
+          <label className="block text-gray-700 font-semibold mb-1">
+            Price (₹)
+          </label>
+          <input
+            type="number"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+            required
+            placeholder="0.00"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#B4161B]/60 focus:border-[#B4161B] transition"
+          />
+        </div>
+      </div>
+
+      {/* Description */}
+      <div className="mb-5">
+        <label className="block text-gray-700 font-semibold mb-1">
+          Description
+        </label>
+        <textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          rows="3"
+          placeholder="Describe the dish..."
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#B4161B]/60 focus:border-[#B4161B] transition resize-none"
+        />
+      </div>
+
+      {/* Category */}
+      <div className="mb-5">
+        <label className="block text-gray-700 font-semibold mb-1">
+          Category
+        </label>
+        <select
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          required
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-[#B4161B]/60 focus:border-[#B4161B] transition"
         >
-            <h4 className="text-lg md:text-xl font-bold text-gray-900 mb-4">
-                Create New Menu Item
-            </h4>
+          <option value="">Select a Category</option>
+          {(categories || []).map((cat) => (
+            <option key={cat._id} value={cat._id}>
+              {cat.name}
+            </option>
+          ))}
+        </select>
+      </div>
 
-            {error && <p className="text-red-600 mb-4">{error}</p>}
-            {success && <p className="text-green-600 mb-4">{success}</p>} {/* Display success message */}
+      {/* Availability + Dietary */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+        <div>
+          <label className="block text-gray-700 font-semibold mb-1">
+            Availability
+          </label>
+          <select
+            value={isAvailable}
+            onChange={(e) => setIsAvailable(e.target.value === "true")}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#B4161B]/60 focus:border-[#B4161B] transition"
+          >
+            <option value="true">Available (Show on Menu)</option>
+            <option value="false">Out of Stock (Hide)</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-gray-700 font-semibold mb-1">
+            Dietary Type
+          </label>
+          <select
+            value={isVegetarian}
+            onChange={(e) => setIsVegetarian(e.target.value === "true")}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#B4161B]/60 focus:border-[#B4161B] transition"
+          >
+            <option value="false">Vegetarian 🥦</option>
+            <option value="true">Non-Vegetarian 🍗</option>
+          </select>
+        </div>
+      </div>
 
-            {/* Grid: Name & Price */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                    <label className="block text-gray-700 font-medium mb-1">Item Name</label>
-                    <input
-                        type="text"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        required
-                        className="w-full px-4 py-2 border border-orange-300 bg-white rounded-lg shadow-sm transition"
-                    />
-                </div>
-                <div>
-                    <label className="block text-gray-700 font-medium mb-1">Price</label>
-                    <input
-                        type="number"
-                        value={price}
-                        onChange={(e) => setPrice(e.target.value)}
-                        required
-                        className="w-full px-4 py-2 border border-orange-300 bg-white rounded-lg shadow-sm transition"
-                    />
-                </div>
-            </div>
+      {/* Image Upload */}
+      <div className="mb-6">
+        <label className="block text-gray-700 font-semibold mb-1">
+          Item Image
+        </label>
+        <input
+          type="file"
+          onChange={(e) => setImage(e.target.files[0])}
+          accept="image/*"
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-[#B4161B]/60 focus:border-[#B4161B]"
+        />
+        {image && (
+          <img
+            src={URL.createObjectURL(image)}
+            alt="preview"
+            className="h-28 mt-3 rounded-lg object-cover border border-gray-200 shadow-sm"
+          />
+        )}
+      </div>
 
-            {/* Description */}
-            <div className="mb-4">
-                <label className="block text-gray-700 font-medium mb-1">Description</label>
-                <textarea
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    rows="2"
-                    className="w-full px-4 py-2 border border-orange-300 bg-white rounded-lg shadow-sm transition resize-none"
-                />
-            </div>
-
-            {/* Category */}
-            <div className="mb-4">
-                <label className="block text-gray-700 font-medium mb-1">Category</label>
-                <select
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    required
-                    className="w-full px-4 py-2 border border-orange-300 bg-white rounded-lg shadow-sm focus:ring-2 focus:ring-green-900 focus:border-green-900 transition"
-                >
-                    <option value="">Select a Category</option>
-                    {(categories || []).map((cat) => (
-                        <option key={cat._id} value={cat._id}>
-                            {cat.name}
-                        </option>
-                    ))}
-                </select>
-            </div>
-
-            {/* NEW: Status and Dietary Options */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                {/* Availability */}
-                <div>
-                    <label className="block text-gray-700 font-medium mb-1">Item Availability</label>
-                    <select 
-                        value={isAvailable} 
-                        onChange={(e) => setIsAvailable(e.target.value === 'true')} 
-                        className="w-full px-4 py-2 border border-orange-300 bg-white rounded-lg shadow-sm transition"
-                    >
-                        <option value="true">Available (Show on Menu)</option>
-                        <option value="false">Out of Stock (Hide)</option>
-                    </select>
-                </div>
-                {/* Dietary Type */}
-                <div>
-                    <label className="block text-gray-700 font-medium mb-1">Dietary Type</label>
-                    <select 
-                        value={isVegetarian} 
-                        onChange={(e) => setIsVegetarian(e.target.value === 'true')} 
-                        className="w-full px-4 py-2 border border-orange-300 bg-white rounded-lg shadow-sm transition"
-                    >
-                        <option value="true">Vegetarian</option>
-                        <option value="false">Non-Vegetarian</option>
-                    </select>
-                </div>
-            </div>
-
-            {/* Image Upload */}
-            <div className="mb-4">
-                <label className="block text-gray-700 font-medium mb-1">Item Image</label>
-                <input
-                    type="file"
-                    onChange={(e) => setImage(e.target.files[0])}
-                    accept="image/*"
-                    className="w-full px-13 py-2 border border-orange-300 bg-white rounded-lg"
-                />
-                {image && (
-                    <img
-                        src={URL.createObjectURL(image)}
-                        alt="preview"
-                        className="h-24 mt-2 rounded-lg object-cover"
-                    />
-                )}
-            </div>
-
-            {/* Submit Button */}
-            <button
-                type="submit"
-                disabled={loading}
-                className={`px-6 py-2 rounded-full text-white font-medium shadow-md transition transform hover:-translate-y-1 hover:scale-105 ${
-                    loading ? "bg-blue-300 cursor-not-allowed" : "bg-green-900 hover:bg-green-700"
-                }`}
-            >
-                {loading ? "Adding..." : "Add Menu Item"}
-            </button>
-        </form>
-    );
+      {/* Submit Button */}
+      <button
+        type="submit"
+        disabled={loading}
+        className={`w-full md:w-auto px-8 py-2.5 rounded-full text-white font-semibold shadow-md transition-all ${
+          loading
+            ? "bg-gray-300 cursor-not-allowed"
+            : "bg-[#B4161B] hover:bg-[#D92A2A] hover:scale-[1.03]"
+        }`}
+      >
+        {loading ? "Adding..." : "Add Menu Item"}
+      </button>
+    </form>
+  );
 };
 
 export default MenuItemForm;

@@ -75,34 +75,34 @@ const MenuPage = () => {
 
   if (loading)
     return (
-      <div className="flex justify-center items-center h-screen bg-[#110D09] text-gray-300">
+      <div className="flex justify-center items-center h-screen bg-white text-gray-600">
         <p>Loading menu...</p>
       </div>
     );
 
   if (error)
     return (
-      <div className="flex justify-center items-center h-screen bg-[#110D09] text-red-400">
+      <div className="flex justify-center items-center h-screen bg-white text-red-600">
         <p>Error: {error}</p>
       </div>
     );
 
   if (!shops)
     return (
-      <div className="flex justify-center items-center h-screen bg-[#110D09] text-gray-400">
+      <div className="flex justify-center items-center h-screen bg-white text-gray-500">
         <p>No shop found for this QR code. Please check the URL.</p>
       </div>
     );
 
   return (
-    <div className="bg-gradient-to-b from-[#211B14] to-[#110D09] text-gray-200 min-h-screen pb-24">
+    <div className="bg-white text-gray-800 min-h-screen pb-24">
       <TopBar shopName={shops.name} shopAddress={shops.address} table={table} />
 
       {/* CATEGORY SCROLLER */}
       {!searchQuery && (
-        <div className="sticky top-[50px] z-20 bg-[#211B14]/90 backdrop-blur-md px-3 border-b border-white/10 overflow-x-auto">
+        <div className="sticky top-[50px] z-20 bg-white border-b border-gray-200 px-3 overflow-x-auto shadow-sm">
           <div className="flex space-x-3 py-3">
-            {(categories || []).map((category, index) => (
+            {(categories || []).map((category) => (
               <div
                 key={category._id}
                 onClick={() => scrollToCategory(category._id)}
@@ -111,17 +111,17 @@ const MenuPage = () => {
                 <div
                   className={`w-16 h-14 flex items-center justify-center rounded-xl border text-lg transition-all duration-300 ${
                     activeCategoryId === category._id
-                      ? "bg-amber-500/20 border-amber-500 text-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.4)]"
-                      : "bg-gray-600/10 border-gray-600/20 text-gray-300 hover:bg-gray-600/20"
+                      ? "bg-[#B4161B] text-white border-[#B4161B] shadow-[0_2px_10px_rgba(180,22,27,0.3)]"
+                      : "bg-[#FAFAFA] text-gray-600 border-gray-200 hover:border-[#B4161B]"
                   }`}
                 >
-                  {category.icon || [<svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-soup"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 11h16a1 1 0 0 1 1 1v.5c0 1.5 -2.517 5.573 -4 6.5v1a1 1 0 0 1 -1 1h-8a1 1 0 0 1 -1 -1v-1c-1.687 -1.054 -4 -5 -4 -6.5v-.5a1 1 0 0 1 1 -1z" /><path d="M12 4a2.4 2.4 0 0 0 -1 2a2.4 2.4 0 0 0 1 2" /><path d="M16 4a2.4 2.4 0 0 0 -1 2a2.4 2.4 0 0 0 1 2" /><path d="M8 4a2.4 2.4 0 0 0 -1 2a2.4 2.4 0 0 0 1 2" /></svg>][index % 1]}
+                  {category.icon || "🍔"}
                 </div>
                 <p
                   className={`mt-1 text-[11px] font-semibold text-center truncate w-16 ${
                     activeCategoryId === category._id
-                      ? "text-amber-400"
-                      : "text-gray-400"
+                      ? "text-[#B4161B]"
+                      : "text-gray-500"
                   }`}
                 >
                   {category.name}
@@ -138,11 +138,11 @@ const MenuPage = () => {
           <div className="space-y-6">
             {searchQuery ? (
               <div className="pt-2">
-                <h2 className="text-xl font-bold text-amber-400 mb-3">
+                <h2 className="text-xl font-bold text-[#B4161B] mb-3">
                   Search Results ({filteredItems.length})
                 </h2>
                 {filteredItems.length > 0 ? (
-                  <div className="space-y-1">
+                  <div className="space-y-2">
                     {filteredItems.map((item) => (
                       <MenuItemCard key={item._id} item={item} />
                     ))}
@@ -166,7 +166,7 @@ const MenuPage = () => {
                   >
                     <h2
                       onClick={() => toggleCategory(category._id)}
-                      className="cursor-pointer text-xl font-semibold text-amber-400 mb-3 flex justify-between items-center"
+                      className="cursor-pointer text-xl font-semibold text-[#B4161B] mb-3 flex justify-between items-center"
                     >
                       <span>
                         {category.name}{" "}
@@ -174,13 +174,13 @@ const MenuPage = () => {
                           ({items.length})
                         </span>
                       </span>
-                      <span className="text-gray-400 text-sm">
+                      <span className="text-gray-500 text-sm">
                         {isOpen ? "︿" : "﹀"}
                       </span>
                     </h2>
 
                     {isOpen && (
-                      <div className="space-y-1 bg-black/20 rounded-xl p-3 border border-white/10">
+                      <div className="space-y-2 bg-[#FAFAFA] rounded-xl p-3 border border-gray-200 shadow-sm">
                         {items.map((item) => (
                           <MenuItemCard key={item._id} item={item} />
                         ))}
@@ -194,11 +194,11 @@ const MenuPage = () => {
         )}
 
         {isFoodCourt && (
-          <div className="text-center p-10 bg-black/20 backdrop-blur-sm rounded-xl border border-white/10">
-            <h2 className="text-3xl font-semibold text-amber-400">
+          <div className="text-center p-10 bg-[#FAFAFA] rounded-xl border border-gray-200 shadow-sm">
+            <h2 className="text-3xl font-semibold text-[#B4161B]">
               Food Court Menu
             </h2>
-            <p className="text-gray-300 mt-2">
+            <p className="text-gray-500 mt-2">
               Displaying menu items from multiple shops.
             </p>
           </div>

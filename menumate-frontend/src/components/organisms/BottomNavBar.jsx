@@ -8,14 +8,14 @@ const NavItem = ({ to, icon: Icon, label, isActive }) => {
   return (
     <Link
       to={to}
-      className={`flex flex-col items-center justify-center p-1.5 transition-all duration-300 ${
+      className={`flex flex-col items-center justify-center py-2 transition-all duration-300 ${
         isActive
-          ? "text-amber-400 scale-105 "
-          : "text-gray-400 hover:text-amber-300 hover:scale-105"
+          ? "text-white scale-105"
+          : "text-red-100 hover:text-white hover:scale-105"
       }`}
     >
-      <Icon size={17} />
-      <span className="text-[10px] font-medium mt-0.5">{label}</span>
+      <Icon size={18} />
+      <span className="text-[10px] font-medium mt-1">{label}</span>
     </Link>
   );
 };
@@ -29,8 +29,8 @@ const BottomNavBar = () => {
   const reviewsUrl = shopId ? `/reviews/${shopId}` : "/reviews";
 
   return (
-    <footer className="fixed bottom-0 left-0 w-full bg-gradient-to-t from-[#1a1a1a] to-[#262626] border-t border-[#2e2e2e] backdrop-blur-lg z-50 shadow-[0_-2px_10px_rgba(0,0,0,0.4)]">
-      <div className="max-w-lg mx-auto flex justify-around items-center h-12 sm:h-14 px-2">
+    <footer className="fixed bottom-0 left-0 w-full bg-[#B4161B] border-t border-[#B4161B] shadow-[0_-2px_12px_rgba(180,22,27,0.3)] z-50 rounded-t-2xl">
+      <div className="max-w-lg mx-auto flex justify-around items-center h-14 sm:h-16 px-3">
         <NavItem
           to="/"
           icon={FaHome}

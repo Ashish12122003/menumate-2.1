@@ -1,12 +1,16 @@
-// src/components/organisms/OrderDashboard.jsx
-import React, { useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchOrdersForShop, updateOrderStatus } from '../../features/vendor/orderSlice';
-import useVendorWebSocket from '../../hooks/useVendorWebSocket';
+import React, { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  fetchOrdersForShop,
+  updateOrderStatus,
+} from "../../features/vendor/orderSlice";
+import useVendorWebSocket from "../../hooks/useVendorWebSocket";
 
 const OrderDashboard = ({ shopId }) => {
   const dispatch = useDispatch();
-  const { orders, loading, error } = useSelector((state) => state.vendorOrder);
+  const { orders = [], loading, error } = useSelector(
+    (state) => state.vendorOrder
+  );
 
   useVendorWebSocket(shopId);
 
@@ -15,99 +19,154 @@ const OrderDashboard = ({ shopId }) => {
   }, [dispatch, shopId]);
 
   const handleStatusChange = async (orderId, newStatus) => {
-    const updatedOrders = orders.map(order =>
-      order._id === orderId ? { ...order, orderStatus: newStatus } : order
-    );
-    dispatch({ type: 'vendorOrder/setOrders', payload: updatedOrders });
-
     try {
-      const updatedOrder = await dispatch(updateOrderStatus({ orderId, status: newStatus })).unwrap();
-      const refreshedOrders = orders.map(order =>
-        order._id === updatedOrder._id ? updatedOrder : order
-      );
-      dispatch({ type: 'vendorOrder/setOrders', payload: refreshedOrders });
-    } catch (err) {
-      console.error('Failed to update order status', err);
+      await dispatch(updateOrderStatus({ orderId, status: newStatus })).unwrap();
       dispatch(fetchOrdersForShop(shopId));
+    } catch (err) {
+      console.error("Failed to update order status:", err);
     }
   };
 
-  if (loading) return <div className="text-center p-4">Loading orders...</div>;
-  if (error) return <div className="text-center p-4 text-red-500">Error: {error}</div>;
+  const sections = [
+    { title: "Pending", color: "text-[#B4161B]", bg: "bg-[#FFF5F5]" },
+    { title: "Accepted", color: "text-[#B85C38]", bg: "bg-[#FFF8F6]" },
+    { title: "Preparing", color: "text-[#D97706]", bg: "bg-[#FFF7E5]" },
+    { title: "Ready", color: "text-[#15803D]", bg: "bg-[#F0FFF4]" },
+    { title: "Completed", color: "text-[#4B5563]", bg: "bg-[#F9FAFB]" },
+  ];
 
-  const statusSections = ['Pending', 'Accepted', 'Preparing', 'Ready', 'Completed'];
+  if (loading)
+    return (
+      <div className="text-center py-20 text-gray-600 font-medium animate-pulse">
+        Loading orders...
+      </div>
+    );
+  if (error)
+    return (
+      <div className="text-center py-20 text-red-500 font-medium">
+        Error: {error}
+      </div>
+    );
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-5 gap-6 p-4">
-      {statusSections.map(status => {
-        const filteredOrders = orders.filter(order => order.orderStatus === status);
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+      {sections.map((section) => {
+        const filtered = orders.filter(
+          (o) => o.orderStatus === section.title
+        );
+
         return (
-          <div key={status} className="bg-gray-50 p-4 rounded-xl shadow-lg flex flex-col max-h-[80vh] overflow-y-auto">
-            <h2 className="text-xl font-bold mb-4 text-center text-gray-700 border-b pb-2">{status} ({filteredOrders.length})</h2>
-            {filteredOrders.length === 0 ? (
-              <p className="text-gray-400 text-center mt-4">No orders</p>
+          <div
+            key={section.title}
+            className={`${section.bg} rounded-xl p-4 shadow-md border border-gray-200 flex flex-col gap-4`}
+          >
+            {/* Header */}
+            <h3
+              className={`text-base font-bold border-b border-gray-300 pb-1 ${section.color}`}
+            >
+              {section.title} ({filtered.length})
+            </h3>
+
+            {filtered.length === 0 ? (
+              <p className="text-gray-400 text-center text-sm mt-6">
+                No orders
+              </p>
             ) : (
-              filteredOrders.map(order => (
+              filtered.map((order) => (
                 <div
                   key={order._id}
-                  className={`bg-white shadow-md rounded-lg p-4 mb-4 border-l-4 hover:scale-105 transition-transform duration-200
-                    ${status === 'Completed' ? 'border-gray-400 opacity-70' : 'border-indigo-500'}`}
+                  className="p-4 rounded-lg bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all"
                 >
-                  <div className="flex justify-between items-center mb-2">
-                    <h3 className="text-md font-semibold text-gray-800">{order.shortOrderId}</h3>
-                    <span className={`text-xs font-semibold px-2 py-1 rounded-full 
-                      ${order.orderStatus === 'Pending' ? 'bg-yellow-200 text-yellow-800' :
-                        order.orderStatus === 'Accepted' ? 'bg-blue-200 text-blue-800' :
-                        order.orderStatus === 'Preparing' ? 'bg-green-200 text-green-800' :
-                        order.orderStatus === 'Ready' ? 'bg-purple-200 text-purple-800' :
-                        'bg-gray-200 text-gray-800'}`}>
-                      {order.orderStatus}
-                    </span>
+                  {/* Order Header */}
+                  <div className="flex justify-between items-start mb-2">
+                    <p className="text-sm font-bold text-gray-900">
+                      #{order.shortOrderId || order._id?.slice(-6)}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {order.createdAt
+                        ? new Date(order.createdAt).toLocaleTimeString()
+                        : ""}
+                    </p>
                   </div>
-                  <p className="text-sm text-gray-600 mb-1">Table: <span className="font-medium">{order.table?.tableNumber}</span></p>
-                  <p className="text-sm text-gray-600 mb-2">Customer: <span className="font-medium">{order.user?.name || 'Guest'}</span></p>
-                  <ul className="list-disc pl-5 mb-2 text-sm text-gray-700 space-y-1">
-                    {order.items.map(item => (
-                      <li key={item.menuItem}>{item.name} x {item.quantity}</li>
+
+                  {/* Info */}
+                  <div className="text-xs text-gray-500 space-y-1 mb-2">
+                    <p>
+                      {order.table?.tableNumber
+                        ? `Table: ${order.table.tableNumber}`
+                        : "Takeaway"}
+                    </p>
+                    <p>Customer: {order.user?.name || "Guest"}</p>
+                  </div>
+
+                  {/* Items */}
+                  <ul className="text-sm text-gray-800 list-disc pl-5 space-y-1 mb-2">
+                    {order.items?.map((item, i) => (
+                      <li key={i}>
+                        {item.name} x {item.quantity}
+                      </li>
                     ))}
                   </ul>
-                  <div className="text-sm font-bold text-gray-800 mb-3">Total: ₹{order.totalAmount}</div>
 
-                  {/* Action Buttons */}
-                  {status !== 'Completed' && (
-                    <div className="flex flex-wrap gap-2">
-                      {status === 'Pending' && (
+                  {/* Total */}
+                  <p className="text-sm font-bold text-right text-gray-800">
+                    Total: ₹{order.totalAmount}
+                  </p>
+
+                  {/* Actions */}
+                  <div className="flex items-center justify-end gap-2 mt-3">
+                    {section.title === "Pending" && (
+                      <>
                         <button
-                          onClick={() => handleStatusChange(order._id, 'Accepted')}
-                          className="flex-1 bg-blue-500 text-white py-1 rounded-md hover:bg-blue-600 transition"
-                        >Accept</button>
-                      )}
-                      {status === 'Accepted' && (
+                          onClick={() =>
+                            handleStatusChange(order._id, "Rejected")
+                          }
+                          className="flex-1 text-xs font-bold py-2 px-3 rounded-md bg-red-100 text-[#B4161B] hover:bg-red-200 transition"
+                        >
+                          Reject
+                        </button>
                         <button
-                          onClick={() => handleStatusChange(order._id, 'Preparing')}
-                          className="flex-1 bg-green-500 text-white py-1 rounded-md hover:bg-green-600 transition"
-                        >Prepare</button>
-                      )}
-                      {status === 'Preparing' && (
-                        <button
-                          onClick={() => handleStatusChange(order._id, 'Ready')}
-                          className="flex-1 bg-purple-500 text-white py-1 rounded-md hover:bg-purple-600 transition"
-                        >Ready</button>
-                      )}
-                      {status === 'Ready' && (
-                        <button
-                          onClick={() => handleStatusChange(order._id, 'Completed')}
-                          className="flex-1 bg-teal-500 text-white py-1 rounded-md hover:bg-teal-600 transition"
-                        >Complete</button>
-                      )}
-                      {['Pending', 'Accepted', 'Preparing'].includes(status) && (
-                        <button
-                          onClick={() => handleStatusChange(order._id, 'Cancelled')}
-                          className="flex-1 bg-gray-300 text-gray-700 py-1 rounded-md hover:bg-gray-400 transition"
-                        >Cancel</button>
-                      )}
-                    </div>
-                  )}
+                          onClick={() =>
+                            handleStatusChange(order._id, "Accepted")
+                          }
+                          className="flex-1 text-xs font-bold py-2 px-3 rounded-md bg-[#B4161B] text-white hover:bg-[#D92A2A] transition"
+                        >
+                          Accept
+                        </button>
+                      </>
+                    )}
+
+                    {section.title === "Accepted" && (
+                      <button
+                        onClick={() =>
+                          handleStatusChange(order._id, "Preparing")
+                        }
+                        className="w-full text-xs font-bold py-2 px-3 rounded-md bg-[#B85C38] text-white hover:bg-[#A34925] transition"
+                      >
+                        Start Preparing
+                      </button>
+                    )}
+
+                    {section.title === "Preparing" && (
+                      <button
+                        onClick={() => handleStatusChange(order._id, "Ready")}
+                        className="w-full text-xs font-bold py-2 px-3 rounded-md bg-[#D97706] text-white hover:bg-[#B45309] transition"
+                      >
+                        Mark as Ready
+                      </button>
+                    )}
+
+                    {section.title === "Ready" && (
+                      <button
+                        onClick={() =>
+                          handleStatusChange(order._id, "Completed")
+                        }
+                        className="w-full text-xs font-bold py-2 px-3 rounded-md bg-[#16A34A] text-white hover:bg-[#15803D] transition"
+                      >
+                        Mark as Completed
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))
             )}

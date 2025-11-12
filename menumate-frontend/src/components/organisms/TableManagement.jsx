@@ -3,7 +3,11 @@ import { useDispatch } from "react-redux";
 import { v4 as uuidv4 } from "uuid";
 import QRCode from "react-qr-code";
 import html2canvas from "html2canvas";
-import { createTablesForShop, getTablesForShop, deleteTable } from "../../api/adminService";
+import {
+  createTablesForShop,
+  getTablesForShop,
+  deleteTable,
+} from "../../api/adminService";
 import { fetchShopData } from "../../features/vendor/shopSlice";
 
 const TableManagement = ({ shopId }) => {
@@ -37,8 +41,8 @@ const TableManagement = ({ shopId }) => {
   const handleManualSubmit = async (e) => {
     e.preventDefault();
     if (!manualTableName) return;
-    if (existingTables.some(t => t.tableNumber === manualTableName)) {
-      setError(`Table number "${manualTableName}" already exists.`);
+    if (existingTables.some((t) => t.tableNumber === manualTableName)) {
+      setError(`Table "${manualTableName}" already exists.`);
       return;
     }
     setLoading(true);
@@ -49,9 +53,9 @@ const TableManagement = ({ shopId }) => {
       const newTable = { tableNumber: manualTableName, qrIdentifier };
       await createTablesForShop(shopId, newTable);
       setManualTableName("");
-      setSuccessMessage(`QR code for table "${manualTableName}" created successfully!`);
-      setGeneratedQRs(prev => [newTable, ...prev]);
-      setExistingTables(prev => [newTable, ...prev]);
+      setSuccessMessage(`QR for "${manualTableName}" created successfully!`);
+      setGeneratedQRs((prev) => [newTable, ...prev]);
+      setExistingTables((prev) => [newTable, ...prev]);
       dispatch(fetchShopData(shopId));
     } catch (err) {
       setError(err.response?.data?.message || "Failed to create QR code.");
@@ -71,12 +75,13 @@ const TableManagement = ({ shopId }) => {
     const tablesToCreate = [];
     for (let i = parseInt(start); i <= parseInt(end); i++) {
       const tableNum = prefix ? `${prefix}${i}` : `${i}`;
-      if (!existingTables.some(t => t.tableNumber === tableNum)) {
+      if (!existingTables.some((t) => t.tableNumber === tableNum)) {
         tablesToCreate.push({ tableNumber: tableNum, qrIdentifier: uuidv4() });
       }
     }
+
     if (tablesToCreate.length === 0) {
-      setError("No new tables to create. All table numbers already exist.");
+      setError("No new tables to create.");
       return;
     }
 
@@ -88,97 +93,85 @@ const TableManagement = ({ shopId }) => {
       setPrefix("");
       setStart("");
       setEnd("");
-      setSuccessMessage(`${tablesToCreate.length} QR codes generated successfully!`);
-      setGeneratedQRs(prev => [...tablesToCreate, ...prev]);
-      setExistingTables(prev => [...tablesToCreate, ...prev]);
+      setSuccessMessage(`${tablesToCreate.length} QR codes created successfully!`);
+      setGeneratedQRs((prev) => [...tablesToCreate, ...prev]);
+      setExistingTables((prev) => [...tablesToCreate, ...prev]);
       dispatch(fetchShopData(shopId));
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to create QR codes in bulk.");
+      setError(err.response?.data?.message || "Failed to create QR codes.");
     } finally {
       setLoading(false);
     }
   };
 
-  // Delete table
+  // Delete
   const handleDelete = async (qrIdentifier) => {
     if (!window.confirm("Are you sure you want to delete this table?")) return;
     try {
       await deleteTable(shopId, qrIdentifier);
-      setGeneratedQRs(prev => prev.filter(t => t.qrIdentifier !== qrIdentifier));
-      setExistingTables(prev => prev.filter(t => t.qrIdentifier !== qrIdentifier));
+      setGeneratedQRs((prev) => prev.filter((t) => t.qrIdentifier !== qrIdentifier));
+      setExistingTables((prev) => prev.filter((t) => t.qrIdentifier !== qrIdentifier));
       setSuccessMessage("Table deleted successfully.");
       dispatch(fetchShopData(shopId));
     } catch (err) {
       console.error(err);
-      setError(err.response?.data?.message || "Failed to delete table.");
+      setError("Failed to delete table.");
     }
   };
 
-  // Download branded QR template
+  // Download
   const handleDownloadTemplate = async (table) => {
     const element = document.getElementById(`qr-template-${table.qrIdentifier}`);
     if (!element) return;
-
-    const canvas = await html2canvas(element, { backgroundColor: "#ffffff", scale: 2 });
-    const pngUrl = canvas.toDataURL("image/png");
-
+    const canvas = await html2canvas(element, { backgroundColor: "#fff", scale: 2 });
     const link = document.createElement("a");
-    link.href = pngUrl;
+    link.href = canvas.toDataURL("image/png");
     link.download = `Table-${table.tableNumber}.png`;
     link.click();
   };
 
-  // Print branded QR template
+  // Print
   const handlePrintTemplate = async (table) => {
     const element = document.getElementById(`qr-template-${table.qrIdentifier}`);
     if (!element) return;
-
-    const canvas = await html2canvas(element, { backgroundColor: "#ffffff", scale: 2 });
+    const canvas = await html2canvas(element, { backgroundColor: "#fff", scale: 2 });
     const dataUrl = canvas.toDataURL("image/png");
-
-    const printWindow = window.open("", "_blank");
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Print QR</title>
-          <style>
-            body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }
-            img { width: 300px; height: auto; }
-          </style>
-        </head>
-        <body>
-          <img src="${dataUrl}" />
-        </body>
-      </html>
+    const win = window.open("", "_blank");
+    win.document.write(`
+      <html><head><title>Print QR</title></head>
+      <body style="display:flex;justify-content:center;align-items:center;height:100vh;">
+        <img src="${dataUrl}" style="width:300px"/>
+      </body></html>
     `);
-    printWindow.document.close();
-    printWindow.focus();
-    printWindow.print();
+    win.document.close();
+    win.print();
   };
 
   return (
-    <div className="bg-white space-y-12">
-      <h2 className="text-3xl font-bold" style={{ color: "#556b2f", borderBottom: "2px solid #ccc", paddingBottom: "8px" }}>Table & QR Management</h2>
+    <div className="bg-white space-y-10 p-6 rounded-2xl shadow-xl">
+      <h2 className="text-3xl font-bold text-[#B4161B] border-b-2 border-gray-200 pb-2">
+        Table & QR Management
+      </h2>
+
       {error && <p className="text-red-600 font-medium text-center">{error}</p>}
       {successMessage && <p className="text-green-700 font-medium text-center">{successMessage}</p>}
 
       {/* Manual QR */}
-      <div className="bg-white rounded-2xl shadow-lg p-6" style={{ border: "1px solid #f0a500" }}>
-        <h3 className="text-xl font-semibold" style={{ color: "#556b2f", marginBottom: "12px" }}>Create One QR Code</h3>
-        <form className="flex flex-col md:flex-row gap-4" onSubmit={handleManualSubmit}>
+      <div className="bg-[#fffafa] rounded-xl shadow-md border border-[#B4161B]/20 p-6">
+        <h3 className="text-xl font-semibold text-[#B4161B] mb-3">Create One QR Code</h3>
+        <form onSubmit={handleManualSubmit} className="flex flex-col md:flex-row gap-3">
           <input
             type="text"
             value={manualTableName}
             onChange={(e) => setManualTableName(e.target.value)}
             placeholder="Table Name/Number"
-            className="bg-orange-50 flex-1 border rounded-lg px-4 py-2 shadow-sm placeholder-gray-400"
-            style={{ borderColor: "#f0a500" }}
             required
+            className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-[#B4161B]/70 text-gray-700 flex-1"
           />
           <button
             type="submit"
             disabled={loading}
-            className="bg-green-900 text-white font-semibold px-6 py-2 rounded-lg shadow-md hover:bg-green-700 transition-all transform hover:scale-105 disabled:opacity-50"
+            className="bg-[#B4161B] hover:bg-[#D92A2A] text-white px-6 py-2 rounded-lg font-semibold shadow-md transition-all disabled:opacity-60"
           >
             {loading ? "Creating..." : "Generate QR"}
           </button>
@@ -186,48 +179,45 @@ const TableManagement = ({ shopId }) => {
       </div>
 
       {/* Bulk QR */}
-      <div className="bg-white rounded-2xl shadow-lg p-6" style={{ border: "1px solid #28a745" }}>
-        <h3 className="text-xl font-semibold" style={{ color: "#556b2f", marginBottom: "12px" }}>Generate Multiple QR Codes</h3>
-        <form className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end" onSubmit={handleBulkSubmit}>
+      <div className="bg-[#fffafa] rounded-xl shadow-md border border-[#B4161B]/20 p-6">
+        <h3 className="text-xl font-semibold text-[#B4161B] mb-3">Generate Multiple QRs</h3>
+        <form
+          onSubmit={handleBulkSubmit}
+          className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end"
+        >
           <div>
-            <label htmlFor="prefix" style={{ color: "#556b2f" }}>Prefix</label>
+            <label className="text-sm font-semibold text-gray-700">Prefix</label>
             <input
               type="text"
-              id="prefix"
               value={prefix}
               onChange={(e) => setPrefix(e.target.value)}
-              className="bg-orange-50 mt-1 block w-full border rounded-lg px-4 py-2 shadow-sm placeholder-gray-400"
-              style={{ borderColor: "#f0a500" }}
+              className="border border-gray-300 rounded-lg w-full px-4 py-2 focus:ring-2 focus:ring-[#B4161B]/70 text-gray-700"
             />
           </div>
           <div>
-            <label htmlFor="start" style={{ color: "#556b2f" }}>Start Number</label>
+            <label className="text-sm font-semibold text-gray-700">Start</label>
             <input
               type="number"
-              id="start"
               value={start}
               onChange={(e) => setStart(e.target.value)}
-              className="bg-orange-50 mt-1 block w-full border rounded-lg px-4 py-2 shadow-sm placeholder-gray-400"
-              style={{ borderColor: "#f0a500" }}
               required
+              className="border border-gray-300 rounded-lg w-full px-4 py-2 focus:ring-2 focus:ring-[#B4161B]/70 text-gray-700"
             />
           </div>
           <div>
-            <label htmlFor="end" style={{ color: "#556b2f" }}>End Number</label>
+            <label className="text-sm font-semibold text-gray-700">End</label>
             <input
               type="number"
-              id="end"
               value={end}
               onChange={(e) => setEnd(e.target.value)}
-              className="bg-orange-50 mt-1 block w-full border rounded-lg px-4 py-2 shadow-sm placeholder-gray-400"
-              style={{ borderColor: "#f0a500" }}
               required
+              className="border border-gray-300 rounded-lg w-full px-4 py-2 focus:ring-2 focus:ring-[#B4161B]/70 text-gray-700"
             />
           </div>
           <button
             type="submit"
             disabled={loading}
-            className="bg-green-900 text-white font-semibold px-6 py-2 rounded-lg shadow-md hover:bg-green-700 transition-all transform hover:scale-105 disabled:opacity-50"
+            className="bg-[#B4161B] hover:bg-[#D92A2A] text-white px-6 py-2 rounded-lg font-semibold shadow-md transition-all disabled:opacity-60"
           >
             {loading ? "Generating..." : "Bulk Generate"}
           </button>
@@ -236,54 +226,56 @@ const TableManagement = ({ shopId }) => {
 
       {/* Display QR Codes */}
       {generatedQRs.length > 0 && (
-        <div className="bg-gray-50 rounded-2xl shadow-lg p-6">
-          <h3 className="text-xl font-semibold" style={{ color: "#556b2f", marginBottom: "12px" }}>Generated QR Codes</h3>
+        <div className="bg-gray-50 rounded-xl shadow-md p-6">
+          <h3 className="text-xl font-semibold text-[#B4161B] mb-4">
+            Generated QR Codes
+          </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {generatedQRs.map((table) => (
               <div
                 key={table.qrIdentifier}
-                className="flex flex-col items-center p-4 border rounded-xl shadow-md"
-                style={{ borderColor: "#f0a500" }}
+                className="flex flex-col items-center p-4 border border-gray-300 rounded-lg shadow-sm bg-white"
               >
-                <p className="font-medium mb-2" style={{ color: "#556b2f" }}>{table.tableNumber}</p>
+                <p className="font-semibold text-[#B4161B] mb-2">{table.tableNumber}</p>
 
                 {/* Branded QR Template */}
                 <div
                   id={`qr-template-${table.qrIdentifier}`}
-                  style={{
-                    background: "linear-gradient(circle, #ffaf60, #d77000)",
-                    padding: "16px",
-                    borderRadius: "12px",
-                    textAlign: "center",
-                    width: "220px",
-                    border: "1px solid #ccc",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                  }}
+                  className="bg-gradient-to-b from-[#ffffff] to-[#ffffff] border border-[#B4161B]/20 rounded-lg p-4 flex flex-col items-center"
                 >
-                  <img src="/MENUMATE real logo.png" alt="Logo" style={{ width: "100px", marginBottom: "12px" }} />
-                  <QRCode value={`${window.location.origin}/menu/${table.qrIdentifier}`} size={150} />
-                  <p style={{ marginTop: "12px", fontWeight: "bold", color: "#333" }}>Table: {table.tableNumber}</p>
-                  <p style={{ fontSize: "12px", color: "#777" }}>Make Your QR With MENUMATE</p>
+                  <img
+                    src="/MENUMATE real logo.png"
+                    alt="Logo"
+                    className="w-20 mb-2"
+                  />
+                  <QRCode
+                    value={`${window.location.origin}/menu/${table.qrIdentifier}`}
+                    size={150}
+                  />
+                  <p className="text-sm font-bold mt-2 text-gray-800">
+                    Table {table.tableNumber}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Powered by MenuMate
+                  </p>
                 </div>
 
-                <div className="flex gap-2 mt-2">
+                <div className="flex gap-2 mt-3">
                   <button
                     onClick={() => handleDownloadTemplate(table)}
-                    className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 transition"
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs"
                   >
                     Download
                   </button>
                   <button
                     onClick={() => handlePrintTemplate(table)}
-                    className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 transition"
+                    className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-xs"
                   >
                     Print
                   </button>
                   <button
                     onClick={() => handleDelete(table.qrIdentifier)}
-                    className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition"
+                    className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs"
                   >
                     Delete
                   </button>

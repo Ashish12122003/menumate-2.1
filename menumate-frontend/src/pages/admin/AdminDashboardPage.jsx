@@ -1,5 +1,3 @@
-// src/pages/admin/AdminDashboardPage.jsx
-
 import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -22,9 +20,7 @@ const AdminDashboardPage = () => {
   const [activeTab, setActiveTab] = useState("foodCourts");
 
   useEffect(() => {
-    if (isAuthenticated && !admin) {
-      dispatch(fetchAdminProfile());
-    }
+    if (isAuthenticated && !admin) dispatch(fetchAdminProfile());
     dispatch(fetchMyShops());
   }, [dispatch, isAuthenticated, admin]);
 
@@ -58,88 +54,83 @@ const AdminDashboardPage = () => {
     return (
       <div className="flex items-center justify-center h-screen">
         <p className="text-red-500 font-semibold text-lg">
-          No admin data available
+          No admin data available.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-8">
+    <div className="min-h-screen bg-gradient-to-b from-[#fff5f5] to-[#fffafa]">
       {/* Header */}
-      <div className="flex items-center justify-between mb-10">
-        <h1 className="border border-green-900 bg-green-900 px-8 py-2 rounded-full text-3xl font-bold text-white">
-          Admin Dashboard
+      <header className="flex items-center justify-between px-8 py-6 shadow-md bg-white border-b border-[#B4161B]/10">
+        <h1 className="text-2xl md:text-3xl font-bold text-[#B4161B]">
+          MenuMate Admin Dashboard
         </h1>
         <button
           onClick={handleLogout}
-          className="bg-orange-500 text-white font-semibold px-5 py-2 rounded-full shadow-md hover:bg-red-600 transition-colors duration-200"
+          className="bg-[#B4161B] hover:bg-[#D92A2A] text-white font-semibold px-5 py-2 rounded-full shadow-md transition-all"
         >
           Logout
         </button>
-      </div>
+      </header>
 
       {/* Tabs */}
-      <div className="flex space-x-8 border-b border-gray-200 mb-6">
-        <button
-          onClick={() => setActiveTab("foodCourts")}
-          className={`pb-2 font-semibold transition-colors ${
-            activeTab === "foodCourts"
-              ? "text-green-900 border-b-3 border-green-900"
-              : "text-gray-500 hover:text-green-900"
-          }`}
-        >
-          Food Courts
-        </button>
-        <button
-          onClick={() => setActiveTab("vendorApproval")}
-          className={`pb-2 font-semibold transition-colors ${
-            activeTab === "vendorApproval"
-              ? "text-green-900 border-b-3 border-green-900"
-              : "text-gray-500 hover:text-green-900"
-          }`}
-        >
-          Vendor Approval
-        </button>
-        <button
-          onClick={() => setActiveTab("tables")}
-          className={`pb-2 font-semibold transition-colors ${
-            activeTab === "tables"
-              ? "text-green-900 border-b-3 border-green-900"
-              : "text-gray-500 hover:text-green-900"
-          }`}
-        >
-          Tables & QR
-        </button>
-      </div>
-
-      {/* Shop Selector (only for tables tab) */}
-      {activeTab === "tables" && (
-        <div className="mb-6">
-          <h2 className="text-lg font-semibold mb-2 text-gray-700">
-            Select a Shop
-          </h2>
-          <select
-            onChange={handleShopChange}
-            value={selectedShop?._id || ""}
-            className="px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-orange-300 focus:border-orange-50 outline-none"
+      <nav className="flex justify-center space-x-10 border-b border-gray-200 bg-white py-3">
+        {[
+          { key: "foodCourts", label: "Food Courts" },
+          { key: "vendorApproval", label: "Vendor Approval" },
+          { key: "tables", label: "Tables & QR" },
+        ].map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={`pb-2 text-lg font-semibold transition-all ${
+              activeTab === tab.key
+                ? "text-[#B4161B] border-b-4 border-[#B4161B]"
+                : "text-gray-500 hover:text-[#B4161B]"
+            }`}
           >
-            <option value="">Select Shop</option>
-            {(shops || []).map((shop) => (
-              <option key={shop._id} value={shop._id}>
-                {shop.name}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
+            {tab.label}
+          </button>
+        ))}
+      </nav>
 
-      {/* Tabs Content */}
-      <div className="bg-white shadow-lg rounded-xl p-6">
-        {activeTab === "foodCourts" && <FoodCourtManagement />}
-        {activeTab === "vendorApproval" && <VendorApproval />}
-        {activeTab === "tables" && selectedShop && <TableManagement shopId={selectedShop._id}/>}
-      </div>
+      <main className="max-w-6xl mx-auto px-6 py-10">
+        {/* Shop Selector (for Tables tab) */}
+        {activeTab === "tables" && (
+          <div className="mb-6">
+            <h2 className="text-lg font-semibold mb-2 text-gray-700">
+              Select a Shop
+            </h2>
+            <select
+              onChange={handleShopChange}
+              value={selectedShop?._id || ""}
+              className="px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-[#B4161B]/70 outline-none"
+            >
+              <option value="">Select Shop</option>
+              {(shops || []).map((shop) => (
+                <option key={shop._id} value={shop._id}>
+                  {shop.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* Tabs Content */}
+        <div className="bg-white rounded-xl shadow-lg border border-[#B4161B]/10 p-6">
+          {activeTab === "foodCourts" && <FoodCourtManagement />}
+          {activeTab === "vendorApproval" && <VendorApproval />}
+          {activeTab === "tables" && selectedShop && (
+            <TableManagement shopId={selectedShop._id} />
+          )}
+        </div>
+      </main>
+
+      <footer className="text-center text-xs text-gray-500 py-6 border-t border-gray-100">
+        © {new Date().getFullYear()} MenuMate Admin Portal. All rights reserved.
+      </footer>
     </div>
   );
 };
